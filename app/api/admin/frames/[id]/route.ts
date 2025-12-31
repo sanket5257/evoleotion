@@ -1,17 +1,23 @@
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { v2 as cloudinary } from 'cloudinary'
 
-type Params = {
-  params: Promise<{ id: string }>
+// Configure Cloudinary dynamically
+const configureCloudinary = () => {
+  const { v2: cloudinary } = require('cloudinary')
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  })
+  return cloudinary
 }
 
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -19,12 +25,15 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const resolvedParams = await params
+    const { id } = resolvedParams
+
     if (!id) {
       return NextResponse.json({ error: 'ID missing' }, { status: 400 })
     }
 
-    const { name, description, price, isActive } = await request.json()
+    const body = await request.json()
+    const { name, description, price, isActive } = body
 
     const frame = await prisma.frame.update({
       where: { id },
@@ -32,7 +41,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         name,
         description: description || null,
         price: Number(price),
-        isActive
+        isActive: Boolean(isActive)
       }
     })
 
@@ -43,7 +52,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -51,7 +63,9 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const resolvedParams = await params
+    const { id } = resolvedParams
+
     if (!id) {
       return NextResponse.json({ error: 'ID missing' }, { status: 400 })
     }
@@ -62,15 +76,15 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Frame not found' }, { status: 404 })
     }
 
-    // ✅ Configure Cloudinary ONLY at runtime
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-      api_key: process.env.CLOUDINARY_API_KEY!,
-      api_secret: process.env.CLOUDINARY_API_SECRET!,
-    })
-
+    // Delete from Cloudinary if publicId exists
     if (frame.publicId) {
-      await cloudinary.uploader.destroy(frame.publicId)
+      try {
+        const cloudinary = configureCloudinary()
+        await cloudinary.uploader.destroy(frame.publicId)
+      } catch (cloudinaryError) {
+        console.error('Cloudinary deletion error:', cloudinaryError)
+        // Continue with database deletion even if Cloudinary fails
+      }
     }
 
     await prisma.frame.delete({ where: { id } })
