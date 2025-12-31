@@ -136,6 +136,11 @@ export function FramesManager({ frames }: FramesManagerProps) {
   }
 
   const moveFrame = async (id: string, direction: 'up' | 'down') => {
+    // Temporarily disabled - reorder functionality will be added in a future update
+    alert('Frame reordering is temporarily disabled. This feature will be available in a future update.')
+    return
+    
+    /* 
     try {
       const response = await fetch(`/api/admin/frames/${id}/reorder`, {
         method: 'PATCH',
@@ -151,6 +156,7 @@ export function FramesManager({ frames }: FramesManagerProps) {
       console.error('Error reordering frame:', error)
       alert('Failed to reorder frame. Please try again.')
     }
+    */
   }
 
   return (
