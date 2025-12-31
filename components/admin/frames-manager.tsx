@@ -132,6 +132,11 @@ export function FramesManager({ frames }: FramesManagerProps) {
   }
 
   const toggleActive = async (id: string, isActive: boolean) => {
+    // Temporarily disabled - frame toggle will be added in a future update
+    alert('Frame toggle is temporarily disabled. This feature will be available in a future update.')
+    return
+    
+    /*
     try {
       const response = await fetch(`/api/admin/frames/${id}/toggle`, {
         method: 'PATCH'
@@ -145,6 +150,7 @@ export function FramesManager({ frames }: FramesManagerProps) {
       console.error('Error toggling frame status:', error)
       alert('Failed to update frame status. Please try again.')
     }
+    */
   }
 
   const moveFrame = async (id: string, direction: 'up' | 'down') => {
