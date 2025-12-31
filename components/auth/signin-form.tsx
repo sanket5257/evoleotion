@@ -87,19 +87,7 @@ export function SignInForm() {
         </a>
       </div>
 
-      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-4">
-          <p className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-            Test Admin Credentials:
-          </p>
-          <p className="text-blue-700 dark:text-blue-300">
-            Email: <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">admin@test.com</code>
-          </p>
-          <p className="text-blue-700 dark:text-blue-300">
-            Password: <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">admin123</code>
-          </p>
-        </div>
-      </div>
+      
     </form>
   )
 }
