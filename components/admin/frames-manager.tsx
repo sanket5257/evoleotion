@@ -91,6 +91,11 @@ export function FramesManager({ frames }: FramesManagerProps) {
   }
 
   const handleEdit = (frame: Frame) => {
+    // Temporarily disabled - frame editing will be added in a future update
+    alert('Frame editing is temporarily disabled. This feature will be available in a future update.')
+    return
+    
+    /*
     setEditingFrame(frame)
     setFormData({
       name: frame.name,
@@ -99,9 +104,15 @@ export function FramesManager({ frames }: FramesManagerProps) {
       isActive: frame.isActive,
     })
     setShowAddForm(true)
+    */
   }
 
   const handleDelete = async (id: string) => {
+    // Temporarily disabled - frame deletion will be added in a future update
+    alert('Frame deletion is temporarily disabled. This feature will be available in a future update.')
+    return
+    
+    /*
     if (confirm('Are you sure you want to delete this frame?')) {
       try {
         const response = await fetch(`/api/admin/frames/${id}`, {
@@ -117,6 +128,7 @@ export function FramesManager({ frames }: FramesManagerProps) {
         alert('Failed to delete frame. Please try again.')
       }
     }
+    */
   }
 
   const toggleActive = async (id: string, isActive: boolean) => {
