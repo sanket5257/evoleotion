@@ -9,9 +9,6 @@ async function getUserOrders(userId: string) {
   return await prisma.order.findMany({
     where: { userId },
     include: {
-      frame: {
-        select: { name: true }
-      },
       offer: {
         select: { title: true }
       },

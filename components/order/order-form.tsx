@@ -13,11 +13,10 @@ import { createOrder } from '@/app/actions/order-actions'
 
 interface OrderFormProps {
   pricing: any[]
-  frames: any[]
   offers: any[]
 }
 
-export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
+export function OrderForm({ pricing, offers }: OrderFormProps) {
   const router = useRouter()
   const { data: session } = useSession()
   
@@ -28,7 +27,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
     style: '',
     size: '',
     numberOfFaces: 1,
-    frameId: '',
     specialNotes: '',
     couponCode: '',
   })
@@ -36,7 +34,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
   const [loading, setLoading] = useState(false)
   const [priceCalculation, setPriceCalculation] = useState({
     basePrice: 0,
-    framePrice: 0,
     discountAmount: 0,
     finalPrice: 0,
     appliedOffer: null as any,
@@ -62,13 +59,12 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
   // Calculate price whenever form data changes
   useEffect(() => {
     calculatePrice()
-  }, [formData, pricing, frames, offers])
+  }, [formData, pricing, offers])
 
   const calculatePrice = () => {
     if (!formData.style || !formData.size || !formData.numberOfFaces) {
       setPriceCalculation({
         basePrice: 0,
-        framePrice: 0,
         discountAmount: 0,
         finalPrice: 0,
         appliedOffer: null,
@@ -86,12 +82,7 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
     if (!priceEntry) return
 
     const basePrice = priceEntry.basePrice
-
-    // Calculate frame price
-    const selectedFrame = frames.find(f => f.id === formData.frameId)
-    const framePrice = selectedFrame ? selectedFrame.price : 0
-
-    const subtotal = basePrice + framePrice
+    const subtotal = basePrice
 
     // Find applicable offers
     let bestOffer = null
@@ -134,7 +125,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
 
     setPriceCalculation({
       basePrice,
-      framePrice,
       discountAmount: maxDiscount,
       finalPrice,
       appliedOffer: bestOffer,
@@ -178,7 +168,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
       
       // Add price calculation
       formDataToSend.append('basePrice', priceCalculation.basePrice.toString())
-      formDataToSend.append('framePrice', priceCalculation.framePrice.toString())
       formDataToSend.append('discountAmount', priceCalculation.discountAmount.toString())
       formDataToSend.append('finalPrice', priceCalculation.finalPrice.toString())
       if (priceCalculation.appliedOffer) {
@@ -281,23 +270,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
           />
         </div>
 
-        {frames.length > 0 && (
-          <div className="mt-6">
-            <Select
-              label="Frame (Optional)"
-              value={formData.frameId}
-              onChange={(e) => setFormData(prev => ({ ...prev, frameId: e.target.value }))}
-              options={[
-                { value: '', label: 'No Frame' },
-                ...frames.map(frame => ({ 
-                  value: frame.id, 
-                  label: `${frame.name} (+${formatPrice(frame.price)})` 
-                }))
-              ]}
-            />
-          </div>
-        )}
-
         <div className="mt-6">
           <Textarea
             label="Special Notes (Optional)"
@@ -374,13 +346,6 @@ export function OrderForm({ pricing, frames, offers }: OrderFormProps) {
               <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
               <span className="font-medium">{formatPrice(priceCalculation.basePrice)}</span>
             </div>
-            
-            {priceCalculation.framePrice > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Frame:</span>
-                <span className="font-medium">{formatPrice(priceCalculation.framePrice)}</span>
-              </div>
-            )}
             
             {priceCalculation.discountAmount > 0 && (
               <div className="flex justify-between text-green-600">

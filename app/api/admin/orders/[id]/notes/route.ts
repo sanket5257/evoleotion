@@ -23,7 +23,6 @@ export async function PATCH(
       data: { adminNotes },
       include: {
         user: { select: { name: true, email: true } },
-        frame: { select: { name: true } },
         offer: { select: { title: true } },
         images: true,
       }

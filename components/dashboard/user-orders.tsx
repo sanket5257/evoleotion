@@ -16,7 +16,6 @@ interface Order {
   size: string
   numberOfFaces: number
   basePrice: number
-  framePrice: number
   discountAmount: number
   finalPrice: number
   status: string
@@ -24,7 +23,6 @@ interface Order {
   specialNotes?: string | null
   previewUrl?: string | null
   createdAt: Date
-  frame?: { name: string } | null
   offer?: { title: string } | null
   images: { id: string; imageUrl: string }[]
 }
@@ -131,9 +129,6 @@ export function UserOrders({ orders }: UserOrdersProps) {
                     <p><span className="font-medium">Style:</span> {order.style}</p>
                     <p><span className="font-medium">Size:</span> {order.size}</p>
                     <p><span className="font-medium">People:</span> {order.numberOfFaces}</p>
-                    {order.frame && (
-                      <p><span className="font-medium">Frame:</span> {order.frame.name}</p>
-                    )}
                   </div>
                 </div>
 
@@ -218,7 +213,6 @@ export function UserOrders({ orders }: UserOrdersProps) {
                     <p><strong>Style:</strong> {selectedOrder.style}</p>
                     <p><strong>Size:</strong> {selectedOrder.size}</p>
                     <p><strong>Number of People:</strong> {selectedOrder.numberOfFaces}</p>
-                    {selectedOrder.frame && <p><strong>Frame:</strong> {selectedOrder.frame.name}</p>}
                     {selectedOrder.offer && <p><strong>Offer Applied:</strong> {selectedOrder.offer.title}</p>}
                   </div>
                 </div>
@@ -230,12 +224,6 @@ export function UserOrders({ orders }: UserOrdersProps) {
                       <span>Base Price:</span>
                       <span>{formatPrice(selectedOrder.basePrice)}</span>
                     </div>
-                    {selectedOrder.framePrice > 0 && (
-                      <div className="flex justify-between">
-                        <span>Frame:</span>
-                        <span>{formatPrice(selectedOrder.framePrice)}</span>
-                      </div>
-                    )}
                     {selectedOrder.discountAmount > 0 && (
                       <div className="flex justify-between text-green-600 dark:text-green-400">
                         <span>Discount:</span>

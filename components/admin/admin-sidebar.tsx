@@ -20,7 +20,6 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Gallery', href: '/admin/gallery', icon: Image },
   { name: 'Pricing', href: '/admin/pricing', icon: DollarSign },
-  { name: 'Frames', href: '/admin/frames', icon: Frame },
   { name: 'Offers', href: '/admin/offers', icon: Tag },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

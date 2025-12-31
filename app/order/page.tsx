@@ -3,14 +3,10 @@ import { PageTransition } from '@/components/animations/page-transition'
 import { prisma } from '@/lib/prisma'
 
 async function getOrderData() {
-  const [pricing, frames, offers] = await Promise.all([
+  const [pricing, offers] = await Promise.all([
     prisma.pricing.findMany({
       where: { isActive: true },
       orderBy: { style: 'asc' }
-    }),
-    prisma.frame.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' }
     }),
     prisma.offer.findMany({
       where: {
@@ -32,11 +28,11 @@ async function getOrderData() {
     })
   ])
 
-  return { pricing, frames, offers }
+  return { pricing, offers }
 }
 
 export default async function OrderPage() {
-  const { pricing, frames, offers } = await getOrderData()
+  const { pricing, offers } = await getOrderData()
 
   return (
     <PageTransition>
@@ -56,7 +52,6 @@ export default async function OrderPage() {
 
             <OrderForm 
               pricing={pricing}
-              frames={frames}
               offers={offers}
             />
           </div>

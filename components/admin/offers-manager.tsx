@@ -35,7 +35,6 @@ interface OffersManagerProps {
 const OFFER_TYPES = [
   { value: 'FLAT_DISCOUNT', label: 'Flat Discount' },
   { value: 'PERCENTAGE_DISCOUNT', label: 'Percentage Discount' },
-  { value: 'FREE_FRAME', label: 'Free Frame' },
   { value: 'FIRST_ORDER_DISCOUNT', label: 'First Order Discount' },
 ]
 
@@ -181,8 +180,6 @@ export function OffersManager({ offers }: OffersManagerProps) {
         return <Tag className="w-4 h-4" />
       case 'PERCENTAGE_DISCOUNT':
         return <Percent className="w-4 h-4" />
-      case 'FREE_FRAME':
-        return <Gift className="w-4 h-4" />
       case 'FIRST_ORDER_DISCOUNT':
         return <Percent className="w-4 h-4" />
       default:
@@ -197,8 +194,6 @@ export function OffersManager({ offers }: OffersManagerProps) {
       case 'PERCENTAGE_DISCOUNT':
       case 'FIRST_ORDER_DISCOUNT':
         return `${offer.value}%`
-      case 'FREE_FRAME':
-        return 'Free Frame'
       default:
         return offer.value.toString()
     }

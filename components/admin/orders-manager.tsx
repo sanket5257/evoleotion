@@ -18,7 +18,6 @@ interface Order {
   size: string
   numberOfFaces: number
   basePrice: number
-  framePrice: number
   discountAmount: number
   finalPrice: number
   status: string
@@ -28,7 +27,6 @@ interface Order {
   previewUrl?: string | null
   createdAt: Date
   user?: { name: string | null; email: string } | null
-  frame?: { name: string } | null
   offer?: { title: string } | null
   images: { id: string; imageUrl: string }[]
 }
@@ -227,7 +225,6 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       {order.numberOfFaces} {order.numberOfFaces === 1 ? 'person' : 'people'}
-                      {order.frame && ` • ${order.frame.name}`}
                     </div>
                   </td>
                   
@@ -332,7 +329,6 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                     <p><strong>Style:</strong> {selectedOrder.style}</p>
                     <p><strong>Size:</strong> {selectedOrder.size}</p>
                     <p><strong>Faces:</strong> {selectedOrder.numberOfFaces}</p>
-                    {selectedOrder.frame && <p><strong>Frame:</strong> {selectedOrder.frame.name}</p>}
                   </div>
                 </div>
               </div>

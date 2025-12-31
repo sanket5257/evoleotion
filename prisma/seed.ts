@@ -108,45 +108,6 @@ async function main() {
 
   console.log('💰 Created pricing rules')
 
-  // Create frame options
-  const frames = [
-    {
-      name: 'Classic Wood Frame',
-      description: 'Traditional wooden frame with elegant finish',
-      imageUrl: '/api/placeholder/300/300',
-      publicId: 'frame-classic-wood',
-      price: 999,
-      isActive: true,
-      order: 1,
-    },
-    {
-      name: 'Modern Black Frame',
-      description: 'Sleek black frame perfect for contemporary spaces',
-      imageUrl: '/api/placeholder/300/300',
-      publicId: 'frame-modern-black',
-      price: 799,
-      isActive: true,
-      order: 2,
-    },
-    {
-      name: 'Premium Gold Frame',
-      description: 'Luxurious gold frame for special occasions',
-      imageUrl: '/api/placeholder/300/300',
-      publicId: 'frame-premium-gold',
-      price: 1499,
-      isActive: true,
-      order: 3,
-    },
-  ]
-
-  for (const frame of frames) {
-    await prisma.frame.create({
-      data: frame,
-    })
-  }
-
-  console.log('🖼️ Created frame options')
-
   // Create sample offers
   const offers = [
     {

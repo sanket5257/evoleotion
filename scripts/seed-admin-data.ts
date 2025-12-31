@@ -63,47 +63,6 @@ async function main() {
 
   console.log('✅ Pricing rules created')
 
-  // Create sample frames
-  const frames = [
-    {
-      name: 'Classic Wood Frame',
-      description: 'Beautiful wooden frame with natural finish',
-      imageUrl: '/frames/wood-frame.svg',
-      publicId: 'wood_frame',
-      price: 500,
-      order: 1,
-    },
-    {
-      name: 'Modern Black Frame',
-      description: 'Sleek black frame perfect for contemporary art',
-      imageUrl: '/frames/black-frame.svg',
-      publicId: 'black_frame',
-      price: 400,
-      order: 2,
-    },
-    {
-      name: 'Elegant Gold Frame',
-      description: 'Luxurious gold frame for premium portraits',
-      imageUrl: '/frames/gold-frame.svg',
-      publicId: 'gold_frame',
-      price: 800,
-      order: 3,
-    },
-  ]
-
-  for (const frame of frames) {
-    await prisma.frame.upsert({
-      where: { id: frame.name.toLowerCase().replace(/\s+/g, '_') },
-      update: {},
-      create: {
-        id: frame.name.toLowerCase().replace(/\s+/g, '_'),
-        ...frame
-      },
-    })
-  }
-
-  console.log('✅ Sample frames created')
-
   // Create sample offers
   const offers = [
     {

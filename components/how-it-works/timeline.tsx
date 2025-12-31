@@ -45,7 +45,7 @@ const timelineEvents = [
   {
     time: 'Day 7-10',
     title: 'Final Delivery',
-    description: 'Approved portrait is printed, framed (if selected), and shipped.',
+    description: 'Approved portrait is printed and shipped to your address.',
     status: 'pending',
   },
 ]

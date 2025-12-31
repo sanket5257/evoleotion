@@ -21,7 +21,6 @@ export async function createOrder(formData: FormData) {
       style: formData.get('style') as string,
       size: formData.get('size') as string,
       numberOfFaces: parseInt(formData.get('numberOfFaces') as string),
-      frameId: formData.get('frameId') as string || undefined,
       specialNotes: formData.get('specialNotes') as string || undefined,
       couponCode: formData.get('couponCode') as string || undefined,
     }
@@ -31,7 +30,6 @@ export async function createOrder(formData: FormData) {
 
     // Extract price data
     const basePrice = parseFloat(formData.get('basePrice') as string)
-    const framePrice = parseFloat(formData.get('framePrice') as string)
     const discountAmount = parseFloat(formData.get('discountAmount') as string)
     const finalPrice = parseFloat(formData.get('finalPrice') as string)
     const offerId = formData.get('offerId') as string || undefined
@@ -64,10 +62,8 @@ export async function createOrder(formData: FormData) {
         style: validatedData.style,
         size: validatedData.size,
         numberOfFaces: validatedData.numberOfFaces,
-        frameId: validatedData.frameId,
         specialNotes: validatedData.specialNotes,
         basePrice,
-        framePrice,
         discountAmount,
         finalPrice,
         offerId,
@@ -78,9 +74,6 @@ export async function createOrder(formData: FormData) {
             publicId: upload.public_id,
           }))
         }
-      },
-      include: {
-        frame: true,
       }
     })
 
@@ -101,10 +94,7 @@ export async function createOrder(formData: FormData) {
 export async function getOrderForWhatsApp(orderId: string) {
   try {
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        frame: true,
-      }
+      where: { id: orderId }
     })
 
     if (!order) {
@@ -123,7 +113,6 @@ export async function getOrderForWhatsApp(orderId: string) {
       size: order.size,
       numberOfFaces: order.numberOfFaces,
       finalPrice: order.finalPrice,
-      frameName: order.frame?.name,
     })
 
     return {

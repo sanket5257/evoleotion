@@ -95,23 +95,6 @@ model Pricing {
   @@map("pricing")
 }
 
-model Frame {
-  id           String  @id @default(cuid())
-  name         String
-  description  String?
-  imageUrl     String
-  publicId     String
-  price        Float
-  isActive     Boolean @default(true)
-  order        Int     @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  orders Order[]
-
-  @@map("frames")
-}
-
 model Offer {
   id              String      @id @default(cuid())
   title           String
@@ -126,7 +109,6 @@ model Offer {
   endDate         DateTime?
   minOrderValue   Float?
   applicableStyles String[]
-  freeFrameOfferId String?
   firstOrderOnly  Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -139,7 +121,6 @@ model Offer {
 enum OfferType {
   FLAT_DISCOUNT
   PERCENTAGE_DISCOUNT
-  FREE_FRAME
   FIRST_ORDER_DISCOUNT
 }
 
@@ -153,10 +134,8 @@ model Order {
   style         String
   size          String
   numberOfFaces Int
-  frameId       String?
   specialNotes  String?
   basePrice     Float
-  framePrice    Float         @default(0)
   discountAmount Float        @default(0)
   finalPrice    Float
   status        OrderStatus   @default(PENDING)
@@ -169,7 +148,6 @@ model Order {
   updatedAt     DateTime      @updatedAt
 
   user   User?  @relation(fields: [userId], references: [id])
-  frame  Frame? @relation(fields: [frameId], references: [id])
   offer  Offer? @relation(fields: [offerId], references: [id])
   images OrderImage[]
 

@@ -7,7 +7,6 @@ export const orderSchema = z.object({
   style: z.string().min(1, 'Please select a style'),
   size: z.string().min(1, 'Please select a size'),
   numberOfFaces: z.number().min(1, 'Number of faces must be at least 1'),
-  frameId: z.string().optional(),
   specialNotes: z.string().optional(),
   couponCode: z.string().optional(),
 })
@@ -28,17 +27,10 @@ export const pricingSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
-export const frameSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  price: z.number().min(0, 'Price must be positive'),
-  isActive: z.boolean().default(true),
-})
-
 export const offerSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  type: z.enum(['FLAT_DISCOUNT', 'PERCENTAGE_DISCOUNT', 'FREE_FRAME', 'FIRST_ORDER_DISCOUNT']),
+  type: z.enum(['FLAT_DISCOUNT', 'PERCENTAGE_DISCOUNT', 'FIRST_ORDER_DISCOUNT']),
   value: z.number().min(0, 'Value must be positive'),
   maxDiscount: z.number().optional(),
   couponCode: z.string().optional(),

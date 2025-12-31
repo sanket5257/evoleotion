@@ -29,7 +29,6 @@ export async function PATCH(
       data: { paymentStatus },
       include: {
         user: { select: { name: true, email: true } },
-        frame: { select: { name: true } },
         offer: { select: { title: true } },
         images: true,
       }

@@ -53,19 +53,17 @@ export function generateWhatsAppUrl(
     size: string
     numberOfFaces: number
     finalPrice: number
-    frameName?: string
   }
 ): string {
   const message = `Hi! I've placed an order on your portrait website.
 
 Order Details:
 📋 Order ID: ${orderDetails.orderNumber}
-👤 Name: ${orderDetails.customerName}
+� Namer: ${orderDetails.customerName}
 🎨 Style: ${orderDetails.style}
 📏 Size: ${orderDetails.size}
-👥 Number of Faces: ${orderDetails.numberOfFaces}
-${orderDetails.frameName ? `🖼️ Frame: ${orderDetails.frameName}` : ''}
-💰 Total Amount: ${formatPrice(orderDetails.finalPrice)}
+� SNumber of Faces: ${orderDetails.numberOfFaces}
+� Totael Amount: ${formatPrice(orderDetails.finalPrice)}
 
 Please share payment instructions. Thank you!`
 
