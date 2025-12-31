@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { v2 as cloudinary } from 'cloudinary'
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+// Configure Cloudinary dynamically
+const configureCloudinary = () => {
+  const { v2: cloudinary } = require('cloudinary')
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  })
+  return cloudinary
+}
 
 export async function GET() {
   try {
@@ -49,6 +52,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Configure Cloudinary
+    const cloudinary = configureCloudinary()
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest) {
             { width: 400, height: 400, crop: 'fill', quality: 'auto' }
           ]
         },
-        (error, result) => {
+        (error: any, result: any) => {
           if (error) reject(error)
           else resolve(result)
         }
