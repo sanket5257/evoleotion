@@ -9,6 +9,16 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 ```
 
+### **MANDATORY PACKAGE.JSON SCRIPTS FOR VERCEL**
+```json
+{
+  "scripts": {
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate"
+  }
+}
+```
+
 ### **SAFE API ROUTE TEMPLATE**
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
@@ -46,6 +56,7 @@ export async function GET(request: NextRequest) {
 - Uses singleton pattern
 - Safe for build-time evaluation
 - No module-level async execution
+- Uses default Prisma datasource from schema.prisma
 
 ### **lib/auth.ts** ✅
 - Converted to function-based approach
@@ -57,6 +68,11 @@ export async function GET(request: NextRequest) {
 - Dynamic configuration function
 - Safe for build-time evaluation
 
+### **package.json** ✅
+- Build script includes `prisma generate`
+- `postinstall` script ensures Prisma Client generation
+- Vercel-compatible build process
+
 ## 🚫 WHAT CAUSES BUILD FAILURES
 
 ### **❌ Module-Level Async Execution**
@@ -67,6 +83,24 @@ const result = await prisma.user.findMany()
 // GOOD - Runs only in request handlers
 export async function GET() {
   const result = await prisma.user.findMany()
+}
+```
+
+### **❌ Missing Prisma Generation in Build**
+```json
+// BAD - Vercel will use cached outdated Prisma Client
+{
+  "scripts": {
+    "build": "next build"
+  }
+}
+
+// GOOD - Always generates fresh Prisma Client
+{
+  "scripts": {
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate"
+  }
 }
 ```
 
@@ -94,6 +128,23 @@ export async function GET() { ... }
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 export async function GET() { ... }
+```
+
+### **❌ Invalid Next.js Configuration**
+```javascript
+// BAD - App Router doesn't support 'api' config
+const nextConfig = {
+  api: {
+    bodyParser: { sizeLimit: '10mb' }
+  }
+}
+
+// GOOD - Clean App Router config
+const nextConfig = {
+  experimental: {
+    serverActions: { bodySizeLimit: '10mb' }
+  }
+}
 ```
 
 ## ✅ BUILD-SAFE PATTERNS
@@ -162,17 +213,23 @@ Before deploying, ensure every API route has:
 - [ ] Comprehensive error handling
 - [ ] Authentication checks where needed
 
+Before deploying, ensure package.json has:
+
+- [ ] `"build": "prisma generate && next build"`
+- [ ] `"postinstall": "prisma generate"`
+
 ## 🚀 DEPLOYMENT VERIFICATION
 
 Run these commands before every deployment:
 
 ```bash
-# 1. Build locally
+# 1. Build locally with Prisma generation
 npm run build
 
 # 2. Check for any build errors
 # 3. Verify all routes show as λ (Dynamic) in build output
-# 4. Test critical API endpoints
+# 4. Verify Prisma Client generation in build logs
+# 5. Test critical API endpoints
 ```
 
 ## 📋 FUTURE ROUTE CREATION
@@ -183,5 +240,17 @@ When creating new API routes, always:
 2. Add required exports at the top
 3. Follow the established patterns
 4. Test build locally before pushing
+
+## 🔧 VERCEL-SPECIFIC FIXES
+
+### **Prisma Client Generation**
+- Build script includes `prisma generate` before `next build`
+- `postinstall` script ensures fresh client after dependency installation
+- Explicit datasource configuration in Prisma client
+
+### **Next.js Configuration**
+- Removed invalid `api` configuration (Pages Router only)
+- Clean App Router configuration
+- Proper CORS headers for API routes
 
 This ensures ZERO build failures on Vercel and production environments.
