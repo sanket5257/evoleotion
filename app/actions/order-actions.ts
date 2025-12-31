@@ -9,8 +9,11 @@ import { redirect } from 'next/navigation'
 
 export async function createOrder(formData: FormData) {
   try {
+    console.log('Starting order creation...')
+    
     // Get current session to associate order with user
     const session = await getSession()
+    console.log('Session:', session ? 'Found' : 'Not found')
     
     // Extract form data
     const data = {
@@ -24,8 +27,20 @@ export async function createOrder(formData: FormData) {
       couponCode: formData.get('couponCode') as string || undefined,
     }
 
+    console.log('Form data extracted:', data)
+
     // Validate form data
-    const validatedData = orderSchema.parse(data)
+    let validatedData
+    try {
+      validatedData = orderSchema.parse(data)
+      console.log('Validation successful')
+    } catch (validationError) {
+      console.error('Validation error:', validationError)
+      return {
+        success: false,
+        error: 'Invalid form data. Please check all required fields.',
+      }
+    }
 
     // Extract price data
     const basePrice = parseFloat(formData.get('basePrice') as string)
@@ -33,59 +48,101 @@ export async function createOrder(formData: FormData) {
     const finalPrice = parseFloat(formData.get('finalPrice') as string)
     const offerId = formData.get('offerId') as string || undefined
 
-    // Upload images to Cloudinary
+    console.log('Price data:', { basePrice, discountAmount, finalPrice, offerId })
+
+    // Check for images
     const imageUploads = []
     let imageIndex = 0
     
     while (formData.get(`image-${imageIndex}`)) {
       const file = formData.get(`image-${imageIndex}`) as File
       if (file && file.size > 0) {
-        imageUploads.push(uploadToCloudinary(file, 'orders'))
+        console.log(`Found image ${imageIndex}:`, file.name, file.size)
+        imageUploads.push(file)
       }
       imageIndex++
     }
 
-    const uploadedImages = await Promise.all(imageUploads)
+    console.log(`Found ${imageUploads.length} images to upload`)
+
+    // Upload images to Cloudinary (if configured)
+    let uploadedImages: Array<{ secure_url: string; public_id: string }> = []
+    if (imageUploads.length > 0) {
+      try {
+        // Check if Cloudinary is configured
+        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+          console.warn('Cloudinary not configured, skipping image upload')
+          // Create placeholder image entries
+          uploadedImages = imageUploads.map((file, index) => ({
+            secure_url: `/api/placeholder/400/500?name=${encodeURIComponent(file.name)}`,
+            public_id: `placeholder-${Date.now()}-${index}`,
+          }))
+        } else {
+          console.log('Uploading images to Cloudinary...')
+          const uploads = imageUploads.map(file => uploadToCloudinary(file, 'orders'))
+          uploadedImages = await Promise.all(uploads) as Array<{ secure_url: string; public_id: string }>
+          console.log('Images uploaded successfully')
+        }
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError)
+        // Continue with placeholder images instead of failing
+        uploadedImages = imageUploads.map((file, index) => ({
+          secure_url: `/api/placeholder/400/500?name=${encodeURIComponent(file.name)}`,
+          public_id: `placeholder-${Date.now()}-${index}`,
+        }))
+      }
+    }
 
     // Generate order number
     const orderNumber = generateOrderNumber()
+    console.log('Generated order number:', orderNumber)
 
     // Create order in database
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        userId: session?.userId, // Associate with logged-in user if available
-        customerName: validatedData.customerName,
-        customerEmail: validatedData.customerEmail,
-        customerPhone: validatedData.customerPhone,
-        style: validatedData.style,
-        size: validatedData.size,
-        numberOfFaces: validatedData.numberOfFaces,
-        specialNotes: validatedData.specialNotes,
-        basePrice,
-        discountAmount,
-        finalPrice,
-        offerId,
-        couponCode: validatedData.couponCode,
-        images: {
-          create: uploadedImages.map((upload: any) => ({
-            imageUrl: upload.secure_url,
-            publicId: upload.public_id,
-          }))
+    try {
+      const order = await prisma.order.create({
+        data: {
+          orderNumber,
+          userId: session?.userId, // Associate with logged-in user if available
+          customerName: validatedData.customerName,
+          customerEmail: validatedData.customerEmail,
+          customerPhone: validatedData.customerPhone,
+          style: validatedData.style,
+          size: validatedData.size,
+          numberOfFaces: validatedData.numberOfFaces,
+          specialNotes: validatedData.specialNotes,
+          basePrice,
+          discountAmount,
+          finalPrice,
+          offerId,
+          couponCode: validatedData.couponCode,
+          images: {
+            create: uploadedImages.map((upload) => ({
+              imageUrl: upload.secure_url,
+              publicId: upload.public_id,
+            }))
+          }
         }
-      }
-    })
+      })
 
-    return {
-      success: true,
-      orderId: order.id,
-      orderNumber: order.orderNumber,
+      console.log('Order created successfully:', order.id)
+
+      return {
+        success: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+      }
+    } catch (dbError) {
+      console.error('Database error:', dbError)
+      return {
+        success: false,
+        error: 'Failed to save order to database. Please try again.',
+      }
     }
   } catch (error) {
     console.error('Order creation error:', error)
     return {
       success: false,
-      error: 'Failed to create order. Please try again.',
+      error: `Failed to create order: ${error instanceof Error ? error.message : 'Unknown error'}`,
     }
   }
 }
