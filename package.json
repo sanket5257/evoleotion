@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "vercel-build": "prisma generate && prisma db push && npm run seed:check && next build",
+    "vercel-build": "tsx scripts/build.ts",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
@@ -14,6 +14,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "seed:check": "tsx scripts/seed-check.ts",
+    "deploy:setup": "tsx scripts/deploy-setup.ts",
     "seed:admin": "tsx scripts/seed-admin-data.ts",
     "create-admin": "node scripts/create-admin.js",
     "create-test-admin": "node scripts/create-test-admin.js",
