@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 
 type Params = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
@@ -19,7 +19,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'ID missing' }, { status: 400 })
     }
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -51,7 +51,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'ID missing' }, { status: 400 })
     }
