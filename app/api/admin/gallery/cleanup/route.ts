@@ -1,0 +1,37 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Delete all gallery images with placeholder URLs
+    const deletedImages = await prisma.galleryImage.deleteMany({
+      where: {
+        OR: [
+          { imageUrl: { contains: 'placeholder' } },
+          { imageUrl: { contains: 'via.placeholder.com' } },
+          { publicId: { startsWith: 'sample_' } }
+        ]
+      }
+    })
+
+    return NextResponse.json({ 
+      success: true, 
+      deletedCount: deletedImages.count,
+      message: `Deleted ${deletedImages.count} placeholder images`
+    })
+  } catch (error) {
+    console.error('Error cleaning up gallery:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}

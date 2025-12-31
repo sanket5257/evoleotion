@@ -1,0 +1,6 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#8B4513"/>
+  <rect x="40" y="40" width="320" height="320" fill="#D2B48C"/>
+  <rect x="60" y="60" width="280" height="280" fill="#F5F5DC"/>
+  <text x="200" y="200" text-anchor="middle" fill="#8B4513" font-family="Arial" font-size="24" font-weight="bold">Wood Frame</text>
+</svg>
