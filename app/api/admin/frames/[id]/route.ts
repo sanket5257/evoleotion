@@ -4,25 +4,32 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 
+export const dynamic = 'force-dynamic' // 🔥 VERY IMPORTANT
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 })
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = {
+  params: { id: string }
+}
+
+export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = params
+    if (!id) {
+      return NextResponse.json({ error: 'ID missing' }, { status: 400 })
+    }
+
     const body = await request.json()
     const { name, description, price, isActive } = body
 
@@ -31,7 +38,7 @@ export async function PUT(
       data: {
         name,
         description: description || null,
-        price: parseFloat(price),
+        price: Number(price),
         isActive
       }
     })
@@ -43,20 +50,19 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = params
+    if (!id) {
+      return NextResponse.json({ error: 'ID missing' }, { status: 400 })
+    }
 
-    // Get the frame to delete from Cloudinary
     const frame = await prisma.frame.findUnique({
       where: { id }
     })
@@ -65,10 +71,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Frame not found' }, { status: 404 })
     }
 
-    // Delete from Cloudinary
-    await cloudinary.uploader.destroy(frame.publicId)
+    if (frame.publicId) {
+      await cloudinary.uploader.destroy(frame.publicId)
+    }
 
-    // Delete from database
     await prisma.frame.delete({
       where: { id }
     })
