@@ -3,9 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteParams
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,9 +18,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const resolvedParams = await params
+    const { id } = resolvedParams
     const body = await request.json()
     const { direction } = body
+
+    if (!direction || !['up', 'down'].includes(direction)) {
+      return NextResponse.json({ error: 'Invalid direction' }, { status: 400 })
+    }
 
     // Get current frame
     const currentFrame = await prisma.frame.findUnique({
@@ -80,6 +89,9 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error reordering frame:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' }, 
+      { status: 500 }
+    )
   }
 }
