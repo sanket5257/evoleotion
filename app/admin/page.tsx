@@ -3,36 +3,51 @@ import { DashboardStats } from '@/components/admin/dashboard-stats'
 import { RecentOrders } from '@/components/admin/recent-orders'
 import { RevenueChart } from '@/components/admin/revenue-chart'
 
-async function getDashboardData() {
-  const [
-    totalOrders,
-    pendingOrders,
-    totalRevenue,
-    activeOffers,
-    recentOrders
-  ] = await Promise.all([
-    prisma.order.count(),
-    prisma.order.count({ where: { status: 'PENDING' } }),
-    prisma.order.aggregate({
-      _sum: { finalPrice: true },
-      where: { paymentStatus: 'PAID' }
-    }),
-    prisma.offer.count({ where: { isActive: true } }),
-    prisma.order.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { name: true, email: true } }
-      }
-    })
-  ])
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-  return {
-    totalOrders,
-    pendingOrders,
-    totalRevenue: totalRevenue._sum.finalPrice || 0,
-    activeOffers,
-    recentOrders
+async function getDashboardData() {
+  try {
+    const [
+      totalOrders,
+      pendingOrders,
+      totalRevenue,
+      activeOffers,
+      recentOrders
+    ] = await Promise.all([
+      prisma.order.count(),
+      prisma.order.count({ where: { status: 'PENDING' } }),
+      prisma.order.aggregate({
+        _sum: { finalPrice: true },
+        where: { paymentStatus: 'PAID' }
+      }),
+      prisma.offer.count({ where: { isActive: true } }),
+      prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } }
+        }
+      })
+    ])
+
+    return {
+      totalOrders,
+      pendingOrders,
+      totalRevenue: totalRevenue._sum.finalPrice || 0,
+      activeOffers,
+      recentOrders
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error)
+    return {
+      totalOrders: 0,
+      pendingOrders: 0,
+      totalRevenue: 0,
+      activeOffers: 0,
+      recentOrders: []
+    }
   }
 }
 

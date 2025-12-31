@@ -2,33 +2,42 @@ import { OrderForm } from '@/components/order/order-form'
 import { PageTransition } from '@/components/animations/page-transition'
 import { prisma } from '@/lib/prisma'
 
-async function getOrderData() {
-  const [pricing, offers] = await Promise.all([
-    prisma.pricing.findMany({
-      where: { isActive: true },
-      orderBy: { style: 'asc' }
-    }),
-    prisma.offer.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { startDate: null },
-          { startDate: { lte: new Date() } }
-        ],
-        AND: [
-          {
-            OR: [
-              { endDate: null },
-              { endDate: { gte: new Date() } }
-            ]
-          }
-        ]
-      },
-      orderBy: { priority: 'desc' }
-    })
-  ])
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-  return { pricing, offers }
+async function getOrderData() {
+  try {
+    const [pricing, offers] = await Promise.all([
+      prisma.pricing.findMany({
+        where: { isActive: true },
+        orderBy: { style: 'asc' }
+      }),
+      prisma.offer.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { startDate: null },
+            { startDate: { lte: new Date() } }
+          ],
+          AND: [
+            {
+              OR: [
+                { endDate: null },
+                { endDate: { gte: new Date() } }
+              ]
+            }
+          ]
+        },
+        orderBy: { priority: 'desc' }
+      })
+    ])
+
+    return { pricing, offers }
+  } catch (error) {
+    console.error('Error fetching order data:', error)
+    return { pricing: [], offers: [] }
+  }
 }
 
 export default async function OrderPage() {

@@ -1,14 +1,23 @@
 import { prisma } from '@/lib/prisma'
 import { PricingManager } from '@/components/admin/pricing-manager'
 
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getPricingData() {
-  return await prisma.pricing.findMany({
-    orderBy: [
-      { style: 'asc' },
-      { numberOfFaces: 'asc' },
-      { size: 'asc' }
-    ]
-  })
+  try {
+    return await prisma.pricing.findMany({
+      orderBy: [
+        { style: 'asc' },
+        { numberOfFaces: 'asc' },
+        { size: 'asc' }
+      ]
+    })
+  } catch (error) {
+    console.error('Error fetching pricing data:', error)
+    return []
+  }
 }
 
 export default async function AdminPricingPage() {

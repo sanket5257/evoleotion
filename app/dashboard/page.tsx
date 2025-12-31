@@ -5,19 +5,28 @@ import { prisma } from '@/lib/prisma'
 import { PageTransition } from '@/components/animations/page-transition'
 import { UserOrders } from '@/components/dashboard/user-orders'
 
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getUserOrders(userId: string) {
-  return await prisma.order.findMany({
-    where: { userId },
-    include: {
-      offer: {
-        select: { title: true }
+  try {
+    return await prisma.order.findMany({
+      where: { userId },
+      include: {
+        offer: {
+          select: { title: true }
+        },
+        images: {
+          select: { id: true, imageUrl: true }
+        }
       },
-      images: {
-        select: { id: true, imageUrl: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  })
+      orderBy: { createdAt: 'desc' }
+    })
+  } catch (error) {
+    console.error('Error fetching user orders:', error)
+    return []
+  }
 }
 
 export default async function DashboardPage() {

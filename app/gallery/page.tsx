@@ -4,26 +4,38 @@ import { GalleryFilters } from '@/components/gallery/gallery-filters'
 import { PageTransition } from '@/components/animations/page-transition'
 import { TextReveal } from '@/components/animations/text-reveal'
 
-async function getGalleryData() {
-  const [images, styles] = await Promise.all([
-    prisma.galleryImage.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' }
-    }),
-    prisma.galleryImage.findMany({
-      where: { isActive: true },
-      select: { style: true },
-      distinct: ['style']
-    })
-  ])
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-  return {
-    images: images.map(image => ({
-      ...image,
-      createdAt: image.createdAt.toISOString(),
-      updatedAt: image.updatedAt.toISOString(),
-    })),
-    styles: styles.map(s => s.style)
+async function getGalleryData() {
+  try {
+    const [images, styles] = await Promise.all([
+      prisma.galleryImage.findMany({
+        where: { isActive: true },
+        orderBy: { order: 'asc' }
+      }),
+      prisma.galleryImage.findMany({
+        where: { isActive: true },
+        select: { style: true },
+        distinct: ['style']
+      })
+    ])
+
+    return {
+      images: images.map(image => ({
+        ...image,
+        createdAt: image.createdAt.toISOString(),
+        updatedAt: image.updatedAt.toISOString(),
+      })),
+      styles: styles.map(s => s.style)
+    }
+  } catch (error) {
+    console.error('Error fetching gallery data:', error)
+    return {
+      images: [],
+      styles: []
+    }
   }
 }
 

@@ -1,9 +1,18 @@
 import { prisma } from '@/lib/prisma'
 import { SettingsManager } from '@/components/admin/settings-manager'
 
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getSettings() {
-  const settings = await prisma.adminSettings.findFirst()
-  return settings
+  try {
+    const settings = await prisma.adminSettings.findFirst()
+    return settings
+  } catch (error) {
+    console.error('Error fetching settings:', error)
+    return null
+  }
 }
 
 export default async function AdminSettingsPage() {

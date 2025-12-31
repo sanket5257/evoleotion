@@ -3,37 +3,46 @@ import { PricingTable } from '@/components/pricing/pricing-table'
 import { PageTransition } from '@/components/animations/page-transition'
 import { TextReveal } from '@/components/animations/text-reveal'
 
-async function getPricingData() {
-  const [pricing, offers] = await Promise.all([
-    prisma.pricing.findMany({
-      where: { isActive: true },
-      orderBy: [
-        { style: 'asc' },
-        { numberOfFaces: 'asc' },
-        { size: 'asc' }
-      ]
-    }),
-    prisma.offer.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { startDate: null },
-          { startDate: { lte: new Date() } }
-        ],
-        AND: [
-          {
-            OR: [
-              { endDate: null },
-              { endDate: { gte: new Date() } }
-            ]
-          }
-        ]
-      },
-      orderBy: { priority: 'desc' }
-    })
-  ])
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-  return { pricing, offers }
+async function getPricingData() {
+  try {
+    const [pricing, offers] = await Promise.all([
+      prisma.pricing.findMany({
+        where: { isActive: true },
+        orderBy: [
+          { style: 'asc' },
+          { numberOfFaces: 'asc' },
+          { size: 'asc' }
+        ]
+      }),
+      prisma.offer.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { startDate: null },
+            { startDate: { lte: new Date() } }
+          ],
+          AND: [
+            {
+              OR: [
+                { endDate: null },
+                { endDate: { gte: new Date() } }
+              ]
+            }
+          ]
+        },
+        orderBy: { priority: 'desc' }
+      })
+    ])
+
+    return { pricing, offers }
+  } catch (error) {
+    console.error('Error fetching pricing data:', error)
+    return { pricing: [], offers: [] }
+  }
 }
 
 export default async function PricingPage() {

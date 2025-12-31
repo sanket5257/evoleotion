@@ -1,15 +1,24 @@
 import { prisma } from '@/lib/prisma'
 import { OrdersManager } from '@/components/admin/orders-manager'
 
+// Force dynamic rendering - prevents static generation at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getOrders() {
-  return await prisma.order.findMany({
-    include: {
-      user: { select: { name: true, email: true } },
-      offer: { select: { title: true } },
-      images: true,
-    },
-    orderBy: { createdAt: 'desc' }
-  })
+  try {
+    return await prisma.order.findMany({
+      include: {
+        user: { select: { name: true, email: true } },
+        offer: { select: { title: true } },
+        images: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+  } catch (error) {
+    console.error('Error fetching orders:', error)
+    return []
+  }
 }
 
 export default async function AdminOrdersPage() {
