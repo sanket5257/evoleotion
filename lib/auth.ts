@@ -4,21 +4,21 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 
-export function getAuthOptions(): NextAuthOptions {
-  return {
-    adapter: PrismaAdapter(prisma) as any,
-    providers: [
-      CredentialsProvider({
-        name: 'credentials',
-        credentials: {
-          email: { label: 'Email', type: 'email' },
-          password: { label: 'Password', type: 'password' }
-        },
-        async authorize(credentials) {
-          if (!credentials?.email || !credentials?.password) {
-            return null
-          }
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as any,
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
+        try {
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email
@@ -44,40 +44,47 @@ export function getAuthOptions(): NextAuthOptions {
             name: user.name,
             role: user.role,
           }
+        } catch (error) {
+          console.error('Auth error:', error)
+          return null
         }
-      })
-    ],
-    callbacks: {
-      session: async ({ session, token }) => {
-        if (session?.user && token?.sub) {
-          session.user.id = token.sub
+      }
+    })
+  ],
+  callbacks: {
+    session: async ({ session, token }) => {
+      if (session?.user && token?.sub) {
+        session.user.id = token.sub
+        try {
           const user = await prisma.user.findUnique({
             where: { id: token.sub },
             select: { role: true },
           })
           session.user.role = user?.role || 'USER'
+        } catch (error) {
+          console.error('Session callback error:', error)
+          session.user.role = 'USER'
         }
-        return session
-      },
-      jwt: async ({ user, token }) => {
-        if (user) {
-          token.uid = user.id
-          token.role = user.role
-        }
-        return token
-      },
+      }
+      return session
     },
-    session: {
-      strategy: 'jwt',
+    jwt: async ({ user, token }) => {
+      if (user) {
+        token.uid = user.id
+        token.role = user.role
+      }
+      return token
     },
-    pages: {
-      signIn: '/auth/signin',
-    },
-  }
+  },
+  session: {
+    strategy: 'jwt',
+  },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+  debug: process.env.NODE_ENV === 'development',
 }
-
-// For backward compatibility, export the function result
-export const authOptions = getAuthOptions()
 
 declare module 'next-auth' {
   interface Session {

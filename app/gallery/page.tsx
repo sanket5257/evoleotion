@@ -10,6 +10,7 @@ export const revalidate = 0
 
 async function getGalleryData() {
   try {
+    console.log('Fetching gallery data...')
     const [images, styles] = await Promise.all([
       prisma.galleryImage.findMany({
         where: { isActive: true },
@@ -21,6 +22,8 @@ async function getGalleryData() {
         distinct: ['style']
       })
     ])
+
+    console.log(`Found ${images.length} images and ${styles.length} styles`)
 
     return {
       images: images.map(image => ({
@@ -60,8 +63,31 @@ export default async function GalleryPage() {
             </TextReveal>
           </div>
 
-          <GalleryFilters styles={styles} />
-          <GalleryGrid images={images} />
+          {images.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-gray-400 mb-4">
+                <div className="text-6xl">🖼️</div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No gallery images available
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Our gallery is being updated. Please check back soon!
+              </p>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Debug: No images found in database. Run seed script to populate data.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <GalleryFilters styles={styles} />
+              <GalleryGrid images={images} />
+            </>
+          )}
         </div>
       </div>
     </PageTransition>

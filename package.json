@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push && npm run seed:check && next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
@@ -12,6 +12,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "seed:check": "tsx scripts/seed-check.ts",
     "seed:admin": "tsx scripts/seed-admin-data.ts",
     "create-admin": "node scripts/create-admin.js",
     "create-test-admin": "node scripts/create-test-admin.js",

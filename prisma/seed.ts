@@ -21,42 +21,42 @@ async function main() {
   // Create sample gallery images
   const galleryImages = [
     {
-      title: 'Watercolor Portrait',
-      description: 'Beautiful watercolor style portrait with soft, flowing colors',
+      title: 'Charcoal Portrait',
+      description: 'Beautiful charcoal style portrait with rich textures',
       imageUrl: '/api/placeholder/400/500',
-      publicId: 'sample-watercolor-1',
-      style: 'Watercolor',
-      tags: ['portrait', 'watercolor', 'artistic'],
+      publicId: 'sample-charcoal-1',
+      style: 'Charcoal',
+      tags: ['portrait', 'charcoal', 'artistic'],
       isActive: true,
       order: 1,
     },
     {
-      title: 'Oil Painting Style',
-      description: 'Classic oil painting technique with rich textures',
-      imageUrl: '/api/placeholder/400/500',
-      publicId: 'sample-oil-1',
-      style: 'Oil Painting',
-      tags: ['portrait', 'oil', 'classic'],
-      isActive: true,
-      order: 2,
-    },
-    {
-      title: 'Pencil Sketch',
+      title: 'Pencil Sketch Portrait',
       description: 'Detailed pencil sketch with realistic shading',
       imageUrl: '/api/placeholder/400/500',
       publicId: 'sample-pencil-1',
       style: 'Pencil Sketch',
       tags: ['portrait', 'pencil', 'sketch'],
       isActive: true,
+      order: 2,
+    },
+    {
+      title: 'Charcoal Family Portrait',
+      description: 'Family portrait in charcoal style',
+      imageUrl: '/api/placeholder/400/500',
+      publicId: 'sample-charcoal-2',
+      style: 'Charcoal',
+      tags: ['family', 'charcoal', 'group'],
+      isActive: true,
       order: 3,
     },
     {
-      title: 'Digital Art',
-      description: 'Modern digital art style with vibrant colors',
+      title: 'Pencil Couple Portrait',
+      description: 'Romantic couple portrait in pencil',
       imageUrl: '/api/placeholder/400/500',
-      publicId: 'sample-digital-1',
-      style: 'Digital Art',
-      tags: ['portrait', 'digital', 'modern'],
+      publicId: 'sample-pencil-2',
+      style: 'Pencil Sketch',
+      tags: ['couple', 'pencil', 'romantic'],
       isActive: true,
       order: 4,
     },
@@ -71,7 +71,7 @@ async function main() {
   console.log('🖼️ Created gallery images')
 
   // Create pricing rules
-  const styles = ['Watercolor', 'Oil Painting', 'Pencil Sketch', 'Digital Art']
+  const styles = ['Charcoal', 'Pencil Sketch']
   const sizes = ['8x10', '11x14', '16x20', '18x24']
   const faces = [1, 2, 3, 4, 5]
 
@@ -113,7 +113,7 @@ async function main() {
     {
       title: 'New Year Special',
       description: '20% off all portraits - Limited time offer!',
-      type: 'PERCENTAGE_DISCOUNT',
+      type: 'PERCENTAGE_DISCOUNT' as const,
       value: 20,
       maxDiscount: 2000,
       isActive: true,
@@ -126,7 +126,7 @@ async function main() {
     {
       title: 'First Order Discount',
       description: 'Get 15% off your first portrait order',
-      type: 'FIRST_ORDER_DISCOUNT',
+      type: 'FIRST_ORDER_DISCOUNT' as const,
       value: 15,
       maxDiscount: 1500,
       isActive: true,
@@ -137,7 +137,7 @@ async function main() {
     {
       title: 'SAVE500',
       description: 'Flat ₹500 off on orders above ₹3000',
-      type: 'FLAT_DISCOUNT',
+      type: 'FLAT_DISCOUNT' as const,
       value: 500,
       couponCode: 'SAVE500',
       isActive: true,
@@ -159,7 +159,7 @@ async function main() {
   // Create admin settings
   await prisma.adminSettings.create({
     data: {
-      whatsappNumber: '919876543210', // Replace with actual WhatsApp number
+      whatsappNumber: '917083259985',
       bannerTitle: 'Limited Time Offer!',
       bannerText: 'Get 20% off on all portrait orders. Use code SAVE20',
       bannerActive: true,
