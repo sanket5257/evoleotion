@@ -44,6 +44,43 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = params
+
+    // Find the current image to get the current isActive status
+    const currentImage = await prisma.galleryImage.findUnique({
+      where: { id }
+    })
+
+    if (!currentImage) {
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 })
+    }
+
+    // Toggle the isActive status
+    const updatedImage = await prisma.galleryImage.update({
+      where: { id },
+      data: {
+        isActive: !currentImage.isActive
+      }
+    })
+
+    return NextResponse.json(updatedImage)
+  } catch (error) {
+    console.error('Error toggling gallery image status:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
