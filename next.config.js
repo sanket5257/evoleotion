@@ -16,12 +16,6 @@ const nextConfig = {
       bodySizeLimit: '10mb',
     },
   },
-  // API route configurations
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
   // Handle CORS for API routes
   async headers() {
     return [
@@ -34,15 +28,6 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
         ]
       }
-    ]
-  },
-  // Handle rewrites for dynamic routes
-  async rewrites() {
-    return [
-      {
-        source: '/api/admin/gallery/:id*',
-        destination: '/api/admin/gallery/:id*',
-      },
     ]
   },
 }
