@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAdminFromRequest } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent static evaluation during build

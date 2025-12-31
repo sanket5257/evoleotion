@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
+import { useAuth } from '@/components/auth/auth-context'
 import { Menu, X, User, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from './theme-toggle'
@@ -18,7 +18,7 @@ const navigation = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const { data: session } = useSession()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,9 +64,9 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             
-            {session ? (
+            {user ? (
               <div className="flex items-center space-x-2">
-                {session.user.role === 'ADMIN' ? (
+                {user.role === 'ADMIN' ? (
                   <Link href="/admin">
                     <Button variant="outline" size="sm">
                       Admin
@@ -136,9 +136,9 @@ export function Header() {
               ))}
               
               <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                {session ? (
+                {user ? (
                   <div className="space-y-1">
-                    {session.user.role === 'ADMIN' ? (
+                    {user.role === 'ADMIN' ? (
                       <Link
                         href="/admin"
                         className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"

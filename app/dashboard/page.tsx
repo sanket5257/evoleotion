@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { PageTransition } from '@/components/animations/page-transition'
 import { UserOrders } from '@/components/dashboard/user-orders'
@@ -30,18 +29,18 @@ async function getUserOrders(userId: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
-  if (!session?.user) {
+  if (!session) {
     redirect('/auth/signin')
   }
 
   // Redirect admin users to admin dashboard
-  if (session.user.role === 'ADMIN') {
+  if (session.role === 'ADMIN') {
     redirect('/admin')
   }
 
-  const orders = await getUserOrders(session.user.id)
+  const orders = await getUserOrders(session.userId)
 
   return (
     <PageTransition>
@@ -50,7 +49,7 @@ export default async function DashboardPage() {
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome back, {session.user.name}!
+                Welcome back, {session.name}!
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Track your orders and manage your account

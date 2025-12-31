@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuth } from '@/components/auth/auth-context'
 
 export function SignInForm() {
   const [email, setEmail] = useState('')
@@ -14,35 +14,23 @@ export function SignInForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { signIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
+    const result = await signIn(email, password)
 
-      if (result?.error) {
-        setError('Invalid email or password')
-      } else {
-        // Check if user is admin and redirect accordingly
-        const session = await getSession()
-        if (session?.user?.role === 'ADMIN') {
-          router.push('/admin')
-        } else {
-          router.push('/')
-        }
-      }
-    } catch (error) {
-      setError('An error occurred. Please try again.')
-    } finally {
-      setLoading(false)
+    if (result.success) {
+      // Redirect to admin panel
+      window.location.href = '/admin'
+    } else {
+      setError(result.error || 'Sign in failed')
     }
+
+    setLoading(false)
   }
 
   return (
@@ -77,10 +65,10 @@ export function SignInForm() {
       <Button
         type="submit"
         className="w-full flex items-center justify-center space-x-2"
-        loading={loading}
+        disabled={loading}
       >
         <Lock className="w-4 h-4" />
-        <span>Sign In</span>
+        <span>{loading ? 'Signing in...' : 'Sign In'}</span>
       </Button>
 
       {error && (

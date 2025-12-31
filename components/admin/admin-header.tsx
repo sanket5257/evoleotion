@@ -1,12 +1,19 @@
 'use client'
 
-import { useSession, signOut } from 'next-auth/react'
-import { Bell, LogOut, User } from 'lucide-react'
+import { Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { useAuth } from '@/components/auth/auth-context'
+import { useRouter } from 'next/navigation'
 
 export function AdminHeader() {
-  const { data: session } = useSession()
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/auth/signin')
+  }
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
@@ -30,7 +37,7 @@ export function AdminHeader() {
           <div className="flex items-center space-x-3 pl-4 border-l border-gray-200 dark:border-gray-700">
             <div className="text-right">
               <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {session?.user?.name || session?.user?.email}
+                {user?.name || user?.email}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 Administrator
@@ -40,7 +47,7 @@ export function AdminHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut()}
+              onClick={handleSignOut}
               className="flex items-center space-x-1"
             >
               <LogOut className="w-4 h-4" />

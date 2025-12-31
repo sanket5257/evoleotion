@@ -4,6 +4,7 @@ import { GSAPProvider } from '@/components/animations/gsap-provider'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Providers } from '@/components/providers'
+import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -23,13 +24,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <GSAPProvider>
-            <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-              <Header />
-              <main className="pt-16">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
           </GSAPProvider>
         </Providers>
       </body>

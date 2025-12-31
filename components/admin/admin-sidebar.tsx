@@ -32,7 +32,7 @@ export function AdminSidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-[70]">
+      <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg"
@@ -43,7 +43,7 @@ export function AdminSidebar() {
 
       {/* Sidebar */}
       <div className={cn(
-        'fixed inset-y-0 left-0 z-[60] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
         isOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         <div className="flex flex-col h-full">
@@ -85,7 +85,7 @@ export function AdminSidebar() {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[50] bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
