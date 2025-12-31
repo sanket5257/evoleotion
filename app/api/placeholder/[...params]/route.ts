@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Force dynamic rendering to prevent static evaluation during build
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // Simple placeholder image generator for development
 export async function GET(
   request: NextRequest,

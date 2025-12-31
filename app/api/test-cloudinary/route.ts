@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
-import { v2 as cloudinary } from 'cloudinary'
+import { configureCloudinary } from '@/lib/cloudinary'
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+// Force dynamic rendering to prevent static evaluation during build
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+    // Configure Cloudinary dynamically
+    const cloudinary = configureCloudinary()
+    
     // Test Cloudinary configuration
     const config = {
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
