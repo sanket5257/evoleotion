@@ -55,7 +55,16 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (session?.user && token?.sub) {
         session.user.id = token.sub
-        session.user.role = token.role as string || 'USER'
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true },
+          })
+          session.user.role = user?.role || 'USER'
+        } catch (error) {
+          console.error('Session callback error:', error)
+          session.user.role = 'USER'
+        }
       }
       return session
     },
@@ -69,16 +78,12 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',
   },
   debug: process.env.NODE_ENV === 'development',
-  // Add these for better Vercel compatibility
-  secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
 }
 
 declare module 'next-auth' {
@@ -93,11 +98,5 @@ declare module 'next-auth' {
   
   interface User {
     role: string
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    role?: string
   }
 }

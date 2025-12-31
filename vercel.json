@@ -7,16 +7,5 @@
   },
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true"
-  },
-  "headers": [
-    {
-      "source": "/api/auth/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    }
-  ]
+  }
 }

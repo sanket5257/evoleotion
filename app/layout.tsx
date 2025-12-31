@@ -4,7 +4,6 @@ import { GSAPProvider } from '@/components/animations/gsap-provider'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Providers } from '@/components/providers'
-import { SessionDebug } from '@/components/debug/session-debug'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -30,7 +29,6 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
-              <SessionDebug />
             </div>
           </GSAPProvider>
         </Providers>
