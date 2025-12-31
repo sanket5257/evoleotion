@@ -2,15 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
-// Force dynamic rendering to prevent static evaluation during build
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json()
 
-    // Validate input
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: 'Name, email, and password are required' },
@@ -37,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+      where: { email: email.toLowerCase() },
     })
 
     if (existingUser) {
@@ -56,34 +51,23 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         email: email.toLowerCase(),
         password: hashedPassword,
-        role: 'USER'
+        role: 'USER', // Default role
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true
-      }
     })
 
-    return NextResponse.json(
-      { 
-        message: 'Account created successfully',
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
-      { status: 201 }
-    )
-
+    })
   } catch (error) {
-    console.error('Sign-up error:', error)
+    console.error('Sign up error:', error)
     return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

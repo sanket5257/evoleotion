@@ -10,11 +10,11 @@ export interface SessionPayload {
   email: string
   name?: string
   role: string
-  expiresAt: Date
+  expiresAt: string // Changed from Date to string for JWT compatibility
 }
 
 export async function encrypt(payload: SessionPayload) {
-  return await new SignJWT(payload)
+  return await new SignJWT(payload as any) // Cast to any to satisfy JWT library
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
@@ -26,7 +26,7 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
     const { payload } = await jwtVerify(input, key, {
       algorithms: ['HS256'],
     })
-    return payload as SessionPayload
+    return payload as unknown as SessionPayload // Safe cast through unknown
   } catch (error) {
     return null
   }
@@ -39,7 +39,7 @@ export async function createSession(user: { id: string; email: string; name?: st
     email: user.email,
     name: user.name,
     role: user.role,
-    expiresAt,
+    expiresAt: expiresAt.toISOString(), // Convert Date to string
   })
 
   cookies().set('session', session, {

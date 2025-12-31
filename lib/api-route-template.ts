@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
 // MANDATORY: Force dynamic rendering to prevent static evaluation during build
@@ -24,10 +23,7 @@ export async function GET(
     }
 
     // 2. Authentication check
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     // 3. Your business logic here
     // const result = await prisma.yourModel.findMany()
@@ -36,6 +32,11 @@ export async function GET(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API Error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
     // Handle specific Prisma errors
     if (error instanceof Error && error.message.includes('Record to update not found')) {
@@ -50,10 +51,7 @@ export async function GET(
 export async function POST(request: NextRequest) {
   try {
     // 1. Authentication check
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     // 2. Parse and validate request body
     let body
@@ -75,6 +73,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API Error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -91,10 +95,7 @@ export async function PUT(
     }
 
     // 2. Authentication check
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     // 3. Parse and validate request body
     let body
@@ -114,6 +115,11 @@ export async function PUT(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API Error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
     // Handle specific Prisma errors
     if (error instanceof Error && error.message.includes('Record to update not found')) {
@@ -136,10 +142,7 @@ export async function DELETE(
     }
 
     // 2. Authentication check
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     // 3. Your business logic here
     // await prisma.yourModel.delete({ where: { id: params.id } })
@@ -148,6 +151,11 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('API Error:', error)
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
     // Handle specific Prisma errors
     if (error instanceof Error && error.message.includes('Record to delete does not exist')) {

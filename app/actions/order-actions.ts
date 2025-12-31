@@ -1,7 +1,6 @@
 'use server'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import { generateOrderNumber, generateWhatsAppUrl } from '@/lib/utils'
@@ -11,7 +10,7 @@ import { redirect } from 'next/navigation'
 export async function createOrder(formData: FormData) {
   try {
     // Get current session to associate order with user
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     
     // Extract form data
     const data = {
@@ -55,7 +54,7 @@ export async function createOrder(formData: FormData) {
     const order = await prisma.order.create({
       data: {
         orderNumber,
-        userId: session?.user?.id, // Associate with logged-in user if available
+        userId: session?.userId, // Associate with logged-in user if available
         customerName: validatedData.customerName,
         customerEmail: validatedData.customerEmail,
         customerPhone: validatedData.customerPhone,

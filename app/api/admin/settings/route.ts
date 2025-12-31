@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdminFromRequest } from '@/lib/auth-helpers'
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent static evaluation during build
@@ -8,16 +8,15 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const settings = await prisma.adminSettings.findFirst()
 
     return NextResponse.json(settings)
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching settings:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -25,11 +24,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const body = await request.json()
     const { whatsappNumber, bannerTitle, bannerText, bannerActive } = body
@@ -67,6 +62,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(settings)
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error saving settings:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

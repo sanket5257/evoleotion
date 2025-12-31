@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-context'
-import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react'
+import { Eye, EyeOff, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -19,6 +19,7 @@ export function SignUpForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { signIn } = useAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -80,13 +81,12 @@ export function SignUpForm() {
       }
 
       // Auto sign in after successful registration
-      const result = await signIn('credentials', {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        redirect: false,
-      })
+      const result = await signIn(
+        formData.email.trim().toLowerCase(),
+        formData.password
+      )
 
-      if (result?.error) {
+      if (!result.success) {
         setError('Account created but failed to sign in. Please try signing in manually.')
       } else {
         router.push('/')

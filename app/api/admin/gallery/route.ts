@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 import { configureCloudinary } from '@/lib/cloudinary'
 
@@ -10,11 +9,7 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const session = await requireAdmin()
 
     const images = await prisma.galleryImage.findMany({
       orderBy: { order: 'asc' }
@@ -22,6 +17,9 @@ export async function GET() {
 
     return NextResponse.json(images)
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching gallery images:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -31,11 +29,9 @@ export async function POST(request: NextRequest) {
   try {
     console.log('Gallery POST request received')
     
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      console.log('Unauthorized access attempt')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const sessionResult = await requireAdminFromRequest(request)
+    if (sessionResult instanceof NextResponse) {
+      return sessionResult // Return unauthorized response
     }
 
     console.log('Admin authenticated, processing form data')

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+
+import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent static evaluation during build
@@ -9,11 +9,7 @@ export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     // Delete all gallery images with placeholder URLs
     const deletedImages = await prisma.galleryImage.deleteMany({
@@ -32,6 +28,9 @@ export async function POST(request: NextRequest) {
       message: `Deleted ${deletedImages.count} placeholder images`
     })
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error cleaning up gallery:', error)
     return NextResponse.json({ 
       error: 'Internal server error',

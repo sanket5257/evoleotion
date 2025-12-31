@@ -1,11 +1,11 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getSession, getSessionFromRequest } from '@/lib/session'
 
 export async function requireAdmin() {
   const session = await getSession()
   
   if (!session || session.role !== 'ADMIN') {
-    throw new Error('Unauthorized: Admin access required')
+    throw new Error('Unauthorized')
   }
   
   return session
@@ -15,16 +15,12 @@ export async function requireAdminFromRequest(request: NextRequest) {
   const session = await getSessionFromRequest(request)
   
   if (!session || session.role !== 'ADMIN') {
-    throw new Error('Unauthorized: Admin access required')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   
   return session
 }
 
-export async function getOptionalSession() {
-  try {
-    return await getSession()
-  } catch {
-    return null
-  }
+export function createUnauthorizedResponse() {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }

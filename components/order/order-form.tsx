@@ -18,7 +18,7 @@ interface OrderFormProps {
 
 export function OrderForm({ pricing, offers }: OrderFormProps) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   
   const [formData, setFormData] = useState({
     customerName: '',
@@ -41,14 +41,14 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
 
   // Pre-fill form data for logged-in users
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       setFormData(prev => ({
         ...prev,
-        customerName: session.user.name || '',
-        customerEmail: session.user.email || '',
+        customerName: user.name || '',
+        customerEmail: user.email || '',
       }))
     }
-  }, [session])
+  }, [user])
 
   // Get unique styles and sizes
   const styles = [...new Set(pricing.map(p => p.style))]

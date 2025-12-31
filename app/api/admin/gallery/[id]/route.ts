@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+
+import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 import { configureCloudinary } from '@/lib/cloudinary'
 
@@ -23,11 +23,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Missing image ID' }, { status: 400 })
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const { id } = params
     
@@ -36,6 +32,9 @@ export async function PUT(
     try {
       body = await request.json()
     } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
 
@@ -80,11 +79,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Missing image ID' }, { status: 400 })
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const { id } = params
 
@@ -107,6 +102,9 @@ export async function PATCH(
 
     return NextResponse.json(updatedImage)
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error toggling gallery image status:', error)
     
     // Handle Prisma not found error
@@ -128,11 +126,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Missing image ID' }, { status: 400 })
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const { id } = params
 
@@ -163,6 +157,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Error deleting gallery image:', error)
     
     // Handle Prisma not found error
