@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { gsap } from 'gsap'
-import { ImageParallax } from '@/components/animations/image-parallax'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 interface GalleryImage {
   id: string
@@ -20,36 +19,6 @@ interface GalleryGridProps {
 export function GalleryGrid({ images }: GalleryGridProps) {
   const [filteredImages, setFilteredImages] = useState(images)
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const grid = gridRef.current
-    if (!grid) return
-
-    const items = grid.querySelectorAll('.gallery-item')
-    
-    gsap.fromTo(
-      items,
-      {
-        y: 60,
-        opacity: 0,
-        scale: 0.9,
-      },
-      {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: grid,
-          start: 'top 80%',
-          toggleActions: 'play none none reverse',
-        },
-      }
-    )
-  }, [filteredImages])
 
   // Listen for filter changes from parent component
   useEffect(() => {
@@ -72,8 +41,8 @@ export function GalleryGrid({ images }: GalleryGridProps) {
 
   if (filteredImages.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-xl text-gray-600 dark:text-gray-400">
+      <div className="text-center py-8 sm:py-12 lg:py-16 px-4">
+        <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400">
           No images found for the selected filter.
         </p>
       </div>
@@ -81,39 +50,37 @@ export function GalleryGrid({ images }: GalleryGridProps) {
   }
 
   return (
-    <div 
-      ref={gridRef}
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
       {filteredImages.map((image) => (
         <div
           key={image.id}
-          className="gallery-item group cursor-pointer"
+          className="group cursor-pointer"
         >
-          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <ImageParallax
+          <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <Image
               src={image.imageUrl}
               alt={image.title}
-              className="w-full h-full"
-              intensity={0.05}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
             />
             
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-              <h3 className="text-lg font-semibold mb-1">{image.title}</h3>
-              <p className="text-sm text-gray-200 mb-2">{image.style}</p>
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 lg:p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-1">{image.title}</h3>
+              <p className="text-xs sm:text-sm text-gray-200 mb-2">{image.style}</p>
               {image.description && (
-                <p className="text-xs text-gray-300 line-clamp-2">
+                <p className="text-xs text-gray-300 line-clamp-2 hidden sm:block">
                   {image.description}
                 </p>
               )}
               
               {/* Tags */}
               {image.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-3">
+                <div className="flex flex-wrap gap-1 mt-2 sm:mt-3">
                   {image.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}

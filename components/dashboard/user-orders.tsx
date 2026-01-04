@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Package, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Eye, Package, Clock, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
@@ -32,17 +32,17 @@ interface UserOrdersProps {
 }
 
 const statusColors = {
-  PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  PREVIEW_SENT: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  REVISION: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  APPROVED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  COMPLETED: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  PENDING: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+  PREVIEW_SENT: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+  REVISION: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+  APPROVED: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  COMPLETED: 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
 }
 
 const paymentStatusColors = {
-  PENDING: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  PAID: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  REFUNDED: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  PENDING: 'bg-red-500/20 text-red-400 border border-red-500/30',
+  PAID: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  REFUNDED: 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
 }
 
 const statusIcons = {
@@ -54,11 +54,11 @@ const statusIcons = {
 }
 
 const statusDescriptions = {
-  PENDING: 'Your order is being processed by our artists',
+  PENDING: 'Your sketch order is being processed by our artists',
   PREVIEW_SENT: 'Preview has been sent to your email for review',
   REVISION: 'We are working on the requested changes',
-  APPROVED: 'Your portrait is approved and being finalized',
-  COMPLETED: 'Your portrait is ready! Check your email for details',
+  APPROVED: 'Your sketch is approved and being finalized',
+  COMPLETED: 'Your sketch is ready! Check your email for details',
 }
 
 export function UserOrders({ orders }: UserOrdersProps) {
@@ -66,18 +66,20 @@ export function UserOrders({ orders }: UserOrdersProps) {
 
   if (orders.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="text-center">
-          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            No orders yet
+      <div className="text-center py-24">
+        <div className="border border-white/10 p-12 max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-8 border border-white/20 rounded-full flex items-center justify-center">
+            <Package className="w-10 h-10 text-white/60" />
+          </div>
+          <h3 className="text-2xl font-light tracking-wide text-white mb-4">
+            No Orders Yet
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Ready to create your first custom portrait?
+          <p className="text-gray-400 mb-8 leading-relaxed">
+            Ready to create your first custom pencil or charcoal sketch portrait?
           </p>
           <a
             href="/order"
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-block px-8 py-3 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300"
           >
             Start Your Order
           </a>
@@ -87,22 +89,24 @@ export function UserOrders({ orders }: UserOrdersProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6">
+    <div className="space-y-8">
+      {/* Orders Grid */}
+      <div className="grid gap-8">
         {orders.map((order) => {
           const StatusIcon = statusIcons[order.status as keyof typeof statusIcons]
           
           return (
             <div
               key={order.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+              className="border border-white/10 p-8 hover:border-white/20 transition-colors duration-300"
             >
-              <div className="flex items-start justify-between mb-4">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-2xl font-light tracking-wide text-white mb-2">
                     Order #{order.orderNumber}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-400">
                     Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -111,75 +115,102 @@ export function UserOrders({ orders }: UserOrdersProps) {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-light text-white">
                     {formatPrice(order.finalPrice)}
                   </p>
                   {order.discountAmount > 0 && (
-                    <p className="text-sm text-green-600 dark:text-green-400">
+                    <p className="text-green-400 text-sm">
                       Saved {formatPrice(order.discountAmount)}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
+              {/* Content Grid */}
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Order Details */}
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Order Details</h4>
-                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <p><span className="font-medium">Style:</span> {order.style}</p>
-                    <p><span className="font-medium">Size:</span> {order.size}</p>
-                    <p><span className="font-medium">People:</span> {order.numberOfFaces}</p>
+                  <h4 className="text-lg font-light text-white mb-4 tracking-wide">Order Details</h4>
+                  <div className="space-y-3 text-gray-400">
+                    <div className="flex justify-between">
+                      <span>Style:</span>
+                      <span className="text-white">{order.style}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Size:</span>
+                      <span className="text-white">{order.size}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>People:</span>
+                      <span className="text-white">{order.numberOfFaces}</span>
+                    </div>
+                    {order.offer && (
+                      <div className="flex justify-between">
+                        <span>Offer:</span>
+                        <span className="text-green-400">{order.offer.title}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
+                {/* Status */}
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Status</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <StatusIcon className="w-4 h-4" />
-                      <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+                  <h4 className="text-lg font-light text-white mb-4 tracking-wide">Status</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <StatusIcon className="w-5 h-5 text-white" />
+                      <span className={`px-3 py-1 text-xs uppercase tracking-wider ${statusColors[order.status as keyof typeof statusColors]}`}>
                         {order.status.replace('_', ' ')}
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-400 text-sm leading-relaxed">
                       {statusDescriptions[order.status as keyof typeof statusDescriptions]}
                     </p>
-                    <Badge className={paymentStatusColors[order.paymentStatus as keyof typeof paymentStatusColors]}>
-                      Payment: {order.paymentStatus}
-                    </Badge>
+                    <div>
+                      <span className={`px-3 py-1 text-xs uppercase tracking-wider ${paymentStatusColors[order.paymentStatus as keyof typeof paymentStatusColors]}`}>
+                        Payment: {order.paymentStatus}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Preview Alert */}
               {order.previewUrl && (
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                    🎨 Your preview is ready!
-                  </p>
-                  <a
-                    href={order.previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 underline"
-                  >
-                    View Preview
-                  </a>
+                <div className="mb-8 p-6 border border-blue-500/30 bg-blue-500/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-400 font-medium mb-2">
+                        🎨 Your sketch preview is ready!
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        Review your portrait and let us know if you'd like any changes.
+                      </p>
+                    </div>
+                    <a
+                      href={order.previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-2 bg-blue-600 text-white text-sm uppercase tracking-wider hover:bg-blue-700 transition-colors"
+                    >
+                      View Preview
+                    </a>
+                  </div>
                 </div>
               )}
 
+              {/* Actions */}
               <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => setSelectedOrder(order)}
-                  className="flex items-center space-x-1"
+                  className="flex items-center space-x-2 px-6 py-2 border border-white/30 text-sm uppercase tracking-wider hover:bg-white hover:text-black transition-colors duration-300"
                 >
                   <Eye className="w-4 h-4" />
                   <span>View Details</span>
-                </Button>
+                </button>
 
                 {order.status === 'PREVIEW_SENT' && (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-400">
                     Please check your email to approve or request changes
                   </div>
                 )}
@@ -191,91 +222,125 @@ export function UserOrders({ orders }: UserOrdersProps) {
 
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
+                <h3 className="text-3xl font-light tracking-wider text-white">
                   Order #{selectedOrder.orderNumber}
                 </h3>
-                <Button
-                  variant="ghost"
+                <button
                   onClick={() => setSelectedOrder(null)}
+                  className="p-2 hover:bg-white/10 transition-colors"
                 >
-                  ✕
-                </Button>
+                  <X className="w-6 h-6 text-white" />
+                </button>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold">Order Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Style:</strong> {selectedOrder.style}</p>
-                    <p><strong>Size:</strong> {selectedOrder.size}</p>
-                    <p><strong>Number of People:</strong> {selectedOrder.numberOfFaces}</p>
-                    {selectedOrder.offer && <p><strong>Offer Applied:</strong> {selectedOrder.offer.title}</p>}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold">Pricing Breakdown</h4>
-                  <div className="space-y-2 text-sm">
+              {/* Modal Content */}
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Order Information */}
+                <div>
+                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Order Information</h4>
+                  <div className="space-y-4 text-gray-400">
                     <div className="flex justify-between">
-                      <span>Base Price:</span>
-                      <span>{formatPrice(selectedOrder.basePrice)}</span>
+                      <span>Style:</span>
+                      <span className="text-white">{selectedOrder.style}</span>
                     </div>
-                    {selectedOrder.discountAmount > 0 && (
-                      <div className="flex justify-between text-green-600 dark:text-green-400">
-                        <span>Discount:</span>
-                        <span>-{formatPrice(selectedOrder.discountAmount)}</span>
+                    <div className="flex justify-between">
+                      <span>Size:</span>
+                      <span className="text-white">{selectedOrder.size}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Number of People:</span>
+                      <span className="text-white">{selectedOrder.numberOfFaces}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Order Date:</span>
+                      <span className="text-white">
+                        {new Date(selectedOrder.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    {selectedOrder.offer && (
+                      <div className="flex justify-between">
+                        <span>Offer Applied:</span>
+                        <span className="text-green-400">{selectedOrder.offer.title}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                      <span>Total:</span>
-                      <span>{formatPrice(selectedOrder.finalPrice)}</span>
+                  </div>
+                </div>
+
+                {/* Pricing Breakdown */}
+                <div>
+                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Pricing Breakdown</h4>
+                  <div className="space-y-4 text-gray-400">
+                    <div className="flex justify-between">
+                      <span>Base Price:</span>
+                      <span className="text-white">{formatPrice(selectedOrder.basePrice)}</span>
+                    </div>
+                    {selectedOrder.discountAmount > 0 && (
+                      <div className="flex justify-between">
+                        <span>Discount:</span>
+                        <span className="text-green-400">-{formatPrice(selectedOrder.discountAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xl font-light border-t border-white/10 pt-4">
+                      <span className="text-white">Total:</span>
+                      <span className="text-white">{formatPrice(selectedOrder.finalPrice)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Special Notes */}
               {selectedOrder.specialNotes && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold mb-2">Your Notes</h4>
-                  <p className="text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded">
-                    {selectedOrder.specialNotes}
-                  </p>
+                <div className="mb-8">
+                  <h4 className="text-xl font-light tracking-wide text-white mb-4">Your Notes</h4>
+                  <div className="p-6 border border-white/10 bg-white/5">
+                    <p className="text-gray-400 leading-relaxed">
+                      {selectedOrder.specialNotes}
+                    </p>
+                  </div>
                 </div>
               )}
 
+              {/* Uploaded Photos */}
               {selectedOrder.images.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold mb-4">Your Photos</h4>
+                <div className="mb-8">
+                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Your Photos</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {selectedOrder.images.map((image) => (
-                      <img
-                        key={image.id}
-                        src={image.imageUrl}
-                        alt="Your uploaded photo"
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
+                      <div key={image.id} className="aspect-square border border-white/10 overflow-hidden">
+                        <img
+                          src={image.imageUrl}
+                          alt="Your uploaded photo"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
 
+              {/* Preview Section */}
               {selectedOrder.previewUrl && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                  <h4 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                <div className="border border-blue-500/30 bg-blue-500/10 p-6">
+                  <h4 className="text-xl font-light tracking-wide text-blue-400 mb-4">
                     Preview Available
                   </h4>
-                  <p className="text-blue-700 dark:text-blue-300 mb-3">
-                    Your portrait preview is ready for review!
+                  <p className="text-gray-400 mb-6 leading-relaxed">
+                    Your sketch portrait preview is ready for review! Please check it carefully and let us know if you'd like any adjustments.
                   </p>
                   <a
                     href={selectedOrder.previewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-block px-8 py-3 bg-blue-600 text-white text-sm uppercase tracking-widest hover:bg-blue-700 transition-colors duration-300"
                   >
                     View Preview
                   </a>

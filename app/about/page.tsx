@@ -1,5 +1,4 @@
 import { PageTransition } from '@/components/animations/page-transition'
-import { Footer } from '@/components/layout/footer'
 import { Navbar } from '@/components/layout/navbar'
 
 export default function AboutPage() {
@@ -51,8 +50,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-        
-        <Footer />
       </div>
     </PageTransition>
   )

@@ -40,13 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Auth context: Making sign in request')
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
 
+      console.log('Auth context: Response status:', response.status)
       const data = await response.json()
+      console.log('Auth context: Response data:', data)
 
       if (response.ok) {
         setUser(data.user)
@@ -55,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error }
       }
     } catch (error) {
+      console.error('Auth context: Network error:', error)
       return { success: false, error: 'Network error' }
     }
   }

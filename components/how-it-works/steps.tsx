@@ -111,8 +111,8 @@ export function HowItWorksSteps() {
   }, [])
 
   return (
-    <div ref={containerRef} className="relative">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div ref={containerRef} className="relative px-4 sm:px-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
         {steps.map((step, index) => {
           const Icon = step.icon
           
@@ -123,42 +123,42 @@ export function HowItWorksSteps() {
             >
               {/* Connection Line */}
               {index < steps.length - 1 && (
-                <div className="connection-line hidden lg:block absolute top-20 left-full w-8 h-1 bg-gradient-to-r from-primary-300 via-primary-200 to-transparent z-10 origin-left">
+                <div className="connection-line hidden lg:block absolute top-16 sm:top-20 left-full w-8 h-1 bg-gradient-to-r from-primary-300 via-primary-200 to-transparent z-10 origin-left">
                   <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary-400 rounded-full animate-pulse" />
                 </div>
               )}
               
-              <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 h-full border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 h-full border border-gray-100 dark:border-gray-700 relative overflow-hidden">
                 {/* Gradient Background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
                 
                 {/* Icon */}
-                <div className={`relative w-20 h-20 bg-gradient-to-br ${step.color} rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
-                  <Icon className="w-10 h-10 text-white" />
+                <div className={`relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br ${step.color} rounded-2xl sm:rounded-3xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
+                  <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary-600 group-hover:to-purple-600 transition-all duration-300">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary-600 group-hover:to-purple-600 transition-all duration-300">
                   {step.title}
                 </h3>
                 
-                <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 leading-relaxed">
                   {step.description}
                 </p>
                 
                 {/* Details */}
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                   {step.details.map((detail) => (
-                    <li key={detail} className="flex items-start space-x-3 text-sm text-gray-500 dark:text-gray-400">
-                      <div className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0" />
+                    <li key={detail} className="flex items-start space-x-2 sm:space-x-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <div className="w-2 h-2 bg-primary-500 rounded-full mt-1.5 sm:mt-2 flex-shrink-0" />
                       <span>{detail}</span>
                     </li>
                   ))}
                 </ul>
 
                 {/* Hover Arrow */}
-                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <ArrowRight className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400" />
                 </div>
               </div>
             </div>
@@ -167,12 +167,12 @@ export function HowItWorksSteps() {
       </div>
 
       {/* Mobile Connection Indicators */}
-      <div className="lg:hidden flex justify-center mt-8 space-x-2">
+      <div className="lg:hidden flex justify-center mt-6 sm:mt-8 space-x-2">
         {steps.map((_, index) => (
           <div key={index} className="flex items-center">
-            <div className="w-3 h-3 bg-primary-600 rounded-full" />
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-primary-600 rounded-full" />
             {index < steps.length - 1 && (
-              <div className="w-8 h-0.5 bg-primary-300 mx-2" />
+              <div className="w-6 sm:w-8 h-0.5 bg-primary-300 mx-1.5 sm:mx-2" />
             )}
           </div>
         ))}

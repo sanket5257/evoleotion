@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { Footer } from '@/components/layout/footer'
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -23,10 +24,11 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     )
   }
   
-  // For regular routes, render without header/footer (integrated into page components)
+  // For regular routes, render with global footer
   return (
     <div className="min-h-screen bg-black text-white">
       {children}
+      <Footer />
     </div>
   )
 }

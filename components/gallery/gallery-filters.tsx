@@ -21,11 +21,11 @@ export function GalleryFilters({ styles }: GalleryFiltersProps) {
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-3 mb-12">
+    <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 lg:mb-12 px-4">
       <Button
         variant={activeFilter === null ? 'default' : 'outline'}
         onClick={() => handleFilterChange(null)}
-        className="rounded-full"
+        className="rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2"
       >
         All Styles
       </Button>
@@ -35,7 +35,7 @@ export function GalleryFilters({ styles }: GalleryFiltersProps) {
           key={style}
           variant={activeFilter === style ? 'default' : 'outline'}
           onClick={() => handleFilterChange(style)}
-          className="rounded-full"
+          className="rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2"
         >
           {style}
         </Button>

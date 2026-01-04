@@ -21,16 +21,25 @@ export function SignInForm() {
     setLoading(true)
     setError('')
 
-    const result = await signIn(email, password)
+    try {
+      console.log('Attempting sign in with:', email)
+      const result = await signIn(email, password)
+      console.log('Sign in result:', result)
 
-    if (result.success) {
-      // Redirect to admin panel
-      window.location.href = '/admin'
-    } else {
-      setError(result.error || 'Sign in failed')
+      if (result.success) {
+        console.log('Sign in successful, redirecting...')
+        // Redirect to dashboard first to test
+        router.push('/dashboard')
+      } else {
+        console.log('Sign in failed:', result.error)
+        setError(result.error || 'Sign in failed')
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      setError('An unexpected error occurred')
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
@@ -66,9 +75,19 @@ export function SignInForm() {
         type="submit"
         className="w-full flex items-center justify-center space-x-2"
         disabled={loading}
+        loading={loading}
       >
-        <Lock className="w-4 h-4" />
-        <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+        {loading ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+            <span>Signing in...</span>
+          </>
+        ) : (
+          <>
+            <Lock className="w-4 h-4" />
+            <span>Sign In</span>
+          </>
+        )}
       </Button>
 
       {error && (
