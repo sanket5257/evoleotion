@@ -76,12 +76,6 @@ export function GalleryGrid({ images }: GalleryGridProps) {
         <p className="text-xl text-gray-600 dark:text-gray-400">
           No images found for the selected filter.
         </p>
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <p className="text-sm">Debug: Total images received: {images.length}</p>
-            <p className="text-sm">Selected style: {selectedStyle || 'All'}</p>
-          </div>
-        )}
       </div>
     )
   }

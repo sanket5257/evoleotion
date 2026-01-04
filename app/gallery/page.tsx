@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { GalleryGrid } from '@/components/gallery/gallery-grid'
 import { GalleryFilters } from '@/components/gallery/gallery-filters'
 import { PageTransition } from '@/components/animations/page-transition'
-import { TextReveal } from '@/components/animations/text-reveal'
+import { Navbar } from '@/components/layout/navbar'
 
 // Force dynamic rendering - prevents static generation at build time
 export const dynamic = 'force-dynamic'
@@ -10,7 +10,6 @@ export const revalidate = 0
 
 async function getGalleryData() {
   try {
-    console.log('Fetching gallery data...')
     const [images, styles] = await Promise.all([
       prisma.galleryImage.findMany({
         where: { isActive: true },
@@ -22,8 +21,6 @@ async function getGalleryData() {
         distinct: ['style']
       })
     ])
-
-    console.log(`Found ${images.length} images and ${styles.length} styles`)
 
     return {
       images: images.map(image => ({
@@ -47,47 +44,41 @@ export default async function GalleryPage() {
 
   return (
     <PageTransition>
-      <div className="py-24">
-        <div className="container-width section-padding">
-          <div className="text-center mb-16">
-            <TextReveal className="text-4xl lg:text-6xl font-bold mb-6">
-              Our
-              <span className="gradient-text block">Gallery</span>
-            </TextReveal>
-            <TextReveal 
-              className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
-              delay={0.2}
-            >
-              Explore our collection of stunning portraits created by our talented artists. 
-              Each piece showcases the unique style and craftsmanship we bring to every commission.
-            </TextReveal>
-          </div>
+      <div className="min-h-screen bg-black text-white">
+        {/* Navigation */}
+        <Navbar />
 
-          {images.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-gray-400 mb-4">
-                <div className="text-6xl">🖼️</div>
+        <div className="px-8 py-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+                Gallery
+              </h1>
+                <div className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Explore our collection of stunning pencil and charcoal portraits. 
+                Each piece showcases the artistry and craftsmanship we bring to every commission.
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No gallery images available
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Our gallery is being updated. Please check back soon!
-              </p>
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg max-w-md mx-auto">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Debug: No images found in database. Run seed script to populate data.
-                  </p>
-                </div>
-              )}
             </div>
-          ) : (
-            <>
-              <GalleryFilters styles={styles} />
-              <GalleryGrid images={images} />
-            </>
-          )}
+
+            {images.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-gray-400 mb-4">
+                  <div className="text-6xl">🖼️</div>
+                </div>
+                <h3 className="text-xl font-light text-white mb-2">
+                  Gallery Coming Soon
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Our portfolio is being updated with new artwork. Please check back soon!
+                </p>
+              </div>
+            ) : (
+              <>
+                <GalleryFilters styles={styles} />
+                <GalleryGrid images={images} />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </PageTransition>

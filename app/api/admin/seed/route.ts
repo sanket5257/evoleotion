@@ -11,8 +11,6 @@ export async function POST(_request: NextRequest) {
   try {
     await requireAdmin()
 
-    console.log('🌱 Starting database seed...')
-
     // Check if data already exists
     const existingImages = await prisma.galleryImage.count()
     const existingPricing = await prisma.pricing.count()
@@ -77,8 +75,6 @@ export async function POST(_request: NextRequest) {
       })
     }
 
-    console.log('🖼️ Created gallery images')
-
     // Create pricing rules
     const styles = ['Charcoal', 'Pencil Sketch']
     const sizes = ['8x10', '11x14', '16x20', '18x24']
@@ -114,8 +110,6 @@ export async function POST(_request: NextRequest) {
         }
       }
     }
-
-    console.log('💰 Created pricing rules')
 
     // Create sample offers
     const offers = [
@@ -163,8 +157,6 @@ export async function POST(_request: NextRequest) {
       })
     }
 
-    console.log('🎁 Created sample offers')
-
     // Create admin settings if they don't exist
     const existingSettings = await prisma.adminSettings.findFirst()
     if (!existingSettings) {
@@ -176,7 +168,6 @@ export async function POST(_request: NextRequest) {
           bannerActive: true,
         },
       })
-      console.log('⚙️ Created admin settings')
     }
 
     // Get final counts
@@ -186,8 +177,6 @@ export async function POST(_request: NextRequest) {
       offers: await prisma.offer.count(),
       settings: await prisma.adminSettings.count(),
     }
-
-    console.log('✅ Database seeded successfully!')
 
     return NextResponse.json({
       success: true,

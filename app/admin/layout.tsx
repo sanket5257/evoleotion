@@ -15,7 +15,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="admin-layout min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="admin-layout min-h-screen bg-black text-white">
       <AdminSidebar />
       <div className="lg:pl-64 min-h-screen flex flex-col">
         <AdminHeader />

@@ -10,8 +10,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PortraitStudio - Custom Portrait Art',
-  description: 'Transform your photos into stunning custom portraits with our professional artists.',
+  title: 'Evoleotion - Pencil & Charcoal Portrait Studio',
+  description: 'Custom pencil and charcoal portraits. Transform your cherished memories into timeless hand-drawn art with stunning detail and emotion.',
 }
 
 export default function RootLayout({

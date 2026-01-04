@@ -1,8 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Header } from './header'
-import { Footer } from './footer'
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -19,20 +17,16 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   // For auth routes, render with minimal layout
   if (isAuthRoute) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <div className="min-h-screen bg-black text-white">
         {children}
       </div>
     )
   }
   
-  // For regular routes, render with header and footer
+  // For regular routes, render without header/footer (integrated into page components)
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <Header />
-      <main className="pt-16">
-        {children}
-      </main>
-      <Footer />
+    <div className="min-h-screen bg-black text-white">
+      {children}
     </div>
   )
 }

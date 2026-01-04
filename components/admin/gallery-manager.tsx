@@ -30,8 +30,7 @@ export function GalleryManager({ images }: GalleryManagerProps) {
   const router = useRouter()
   const [showAddForm, setShowAddForm] = useState(false)
   
-  // Debug: Log the images prop
-  console.log('GalleryManager received images:', images.length, images)
+
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -68,8 +67,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
           return
         }
 
-        console.log('Uploading file:', selectedFile.name, 'Size:', selectedFile.size, 'Type:', selectedFile.type)
-        
         const formDataToSend = new FormData()
         formDataToSend.append('image', selectedFile)
         formDataToSend.append('title', formData.title)
@@ -78,13 +75,10 @@ export function GalleryManager({ images }: GalleryManagerProps) {
         formDataToSend.append('tags', formData.tags)
         formDataToSend.append('isActive', formData.isActive.toString())
         
-        console.log('Sending request to /api/admin/gallery...')
         const response = await fetch('/api/admin/gallery', {
           method: 'POST',
           body: formDataToSend
         })
-        
-        console.log('Response status:', response.status)
         
         if (!response.ok) {
           const errorData = await response.json()
@@ -93,7 +87,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
         }
 
         const result = await response.json()
-        console.log('Upload successful:', result)
       }
       
       // Refresh the page to show updated data
@@ -125,19 +118,13 @@ export function GalleryManager({ images }: GalleryManagerProps) {
   }
 
   const handleFileButtonClick = () => {
-    console.log('File button clicked')
     if (fileInputRef.current) {
-      console.log('Triggering file input click')
       fileInputRef.current.click()
-    } else {
-      console.log('File input ref not found')
     }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File input changed')
     const file = e.target.files?.[0]
-    console.log('Selected file:', file)
     
     if (file) {
       // Validate file type
@@ -154,7 +141,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
         return
       }
       
-      console.log('File validated successfully:', file.name, file.size, file.type)
       setSelectedFile(file)
     }
   }
@@ -218,70 +204,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button
-            onClick={async () => {
-              if (confirm('This will delete all placeholder/sample images. Are you sure?')) {
-                try {
-                  const response = await fetch('/api/admin/gallery/cleanup', {
-                    method: 'POST'
-                  })
-                  const result = await response.json()
-                  if (result.success) {
-                    alert(`✅ Cleanup successful! Deleted ${result.deletedCount} placeholder images.`)
-                    router.refresh()
-                  } else {
-                    alert(`❌ Cleanup failed: ${result.error}`)
-                  }
-                } catch (error) {
-                  alert(`❌ Cleanup failed: ${error}`)
-                }
-              }
-            }}
-            variant="outline"
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-          >
-            Clean Placeholders
-          </Button>
-          <Button
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/debug/gallery')
-                const result = await response.json()
-                console.log('Database images:', result)
-                if (result.success) {
-                  alert(`Database has ${result.count} images. Check console for full details.\n\nFirst image URL: ${result.images[0]?.imageUrl || 'No images'}`)
-                } else {
-                  alert(`Debug failed: ${result.error}`)
-                }
-              } catch (error) {
-                alert(`Debug failed: ${error}`)
-              }
-            }}
-            variant="outline"
-            size="sm"
-          >
-            Debug DB
-          </Button>
-          <Button
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/test-cloudinary')
-                const result = await response.json()
-                if (result.success) {
-                  alert('✅ Cloudinary is configured correctly!')
-                } else {
-                  alert(`❌ Cloudinary error: ${result.error}`)
-                }
-              } catch (error) {
-                alert(`❌ Test failed: ${error}`)
-              }
-            }}
-            variant="outline"
-            size="sm"
-          >
-            Test Upload
-          </Button>
           <Button
             onClick={() => setShowAddForm(true)}
             className="flex items-center space-x-2"
@@ -397,30 +319,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
         </div>
       )}
 
-      {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-          <h4 className="font-semibold mb-2">Debug Info:</h4>
-          <p>Images received: {images.length}</p>
-          {images.length > 0 && (
-            <div className="mt-2 space-y-2">
-              <p>First image URL: {images[0].imageUrl}</p>
-              <p>First image title: "{images[0].title}"</p>
-              <p>First image style: "{images[0].style}"</p>
-              <p>First image description: "{images[0].description}"</p>
-              <p>First image tags: {JSON.stringify(images[0].tags)}</p>
-              <p>First image active: {images[0].isActive.toString()}</p>
-              <details className="mt-2">
-                <summary className="cursor-pointer">Full first image data</summary>
-                <pre className="mt-2 text-xs bg-gray-200 dark:bg-gray-700 p-2 rounded overflow-auto">
-                  {JSON.stringify(images[0], null, 2)}
-                </pre>
-              </details>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Images Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((image) => (
@@ -435,10 +333,10 @@ export function GalleryManager({ images }: GalleryManagerProps) {
                 fill
                 className="object-cover"
                 onError={(e) => {
-                  console.error('Image failed to load:', image.imageUrl, e)
+                  // Image failed to load
                 }}
                 onLoad={() => {
-                  console.log('Image loaded successfully:', image.imageUrl)
+                  // Image loaded successfully
                 }}
               />
               <div className="absolute top-2 right-2 flex space-x-1">
@@ -460,13 +358,6 @@ export function GalleryManager({ images }: GalleryManagerProps) {
             </div>
 
             <div className="p-4">
-              {/* Debug each image */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-gray-500 mb-2 border-b pb-2">
-                  Title: "{image.title}" | Style: "{image.style}" | Tags: {image.tags.length}
-                </div>
-              )}
-              
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1" style={{color: 'red', fontSize: '16px'}}>
                 {image.title || 'No Title'}
               </h4>

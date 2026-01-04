@@ -24,7 +24,7 @@ export default async function AdminOffersPage() {
       <div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Offers & Discounts</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Manage promotional offers, discounts, and coupon codes
+          Manage promotional offers, discounts, and coupon codes for sketch commissions
         </p>
       </div>
 

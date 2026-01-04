@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { gsap } from 'gsap'
-import { Check } from 'lucide-react'
+import { Check, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
 
 interface PricingItem {
@@ -37,35 +36,20 @@ interface PricingTableProps {
 }
 
 export function PricingTable({ pricing, offers }: PricingTableProps) {
-  // Compute styles and face counts directly
-  const styles = Array.from(new Set(pricing.map(p => p.style)))
-  const faceCounts = Array.from(new Set(pricing.map(p => p.numberOfFaces))).sort((a, b) => a - b)
-
-  const [selectedStyle, setSelectedStyle] = useState(styles[0] || 'Digital Art')
-  const [selectedFaces, setSelectedFaces] = useState(faceCounts[0] || 1)
+  const [selectedStyle, setSelectedStyle] = useState<string>('')
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Update state when data becomes available
+  // Get unique styles
+  const styles = Array.from(new Set(pricing.map(p => p.style)))
+
+  // Set default style
   useEffect(() => {
-    if (styles.length > 0 && (!selectedStyle || selectedStyle === 'Digital Art')) {
-      console.log('Setting style to:', styles[0])
+    if (styles.length > 0 && !selectedStyle) {
       setSelectedStyle(styles[0])
     }
-  }, [styles.length])
+  }, [styles.length, selectedStyle])
 
-  useEffect(() => {
-    if (faceCounts.length > 0 && (!selectedFaces || selectedFaces === 1)) {
-      console.log('Setting faces to:', faceCounts[0])
-      setSelectedFaces(faceCounts[0])
-    }
-  }, [faceCounts.length])
-
-  // Debug logging
-  console.log('Selected style:', selectedStyle)
-  console.log('Selected faces:', selectedFaces)
-  console.log('Available styles:', styles)
-  console.log('Available face counts:', faceCounts)
-
+  // Animation
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -84,51 +68,21 @@ export function PricingTable({ pricing, offers }: PricingTableProps) {
         opacity: 1,
         scale: 1,
         duration: 0.6,
-        stagger: 0.15,
+        stagger: 0.1,
         ease: 'power2.out',
       }
     )
-  }, [selectedStyle, selectedFaces])
-
-  // Filter pricing based on selections - show all sizes for selected style and faces
-  const filteredPricing = pricing.filter(p => 
-    p.style === selectedStyle && p.numberOfFaces === selectedFaces
-  )
-
-  console.log('Filtered pricing:', filteredPricing.length, 'items')
-
-  // Group by size to show different size options
-  const pricingBySizes = filteredPricing.reduce((acc, price) => {
-    if (!acc[price.size]) {
-      acc[price.size] = price
-    }
-    return acc
-  }, {} as Record<string, PricingItem>)
-
-  const sizePricing = Object.values(pricingBySizes)
-
-  // Handler functions
-  const handleStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStyle = e.target.value
-    console.log('Style changed to:', newStyle)
-    setSelectedStyle(newStyle)
-  }
-
-  const handleFacesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newFaces = parseInt(e.target.value)
-    console.log('Faces changed to:', newFaces)
-    setSelectedFaces(newFaces)
-  }
+  }, [selectedStyle])
 
   // Calculate best offer for each price
-  const getPriceWithOffer = (basePrice: number) => {
+  const getPriceWithOffer = (basePrice: number, style: string) => {
     let bestDiscount = 0
     let bestOffer: Offer | null = null
 
     for (const offer of offers) {
       if (offer.couponCode) continue // Skip coupon offers
       if (offer.minOrderValue && basePrice < offer.minOrderValue) continue
-      if (offer.applicableStyles.length > 0 && !offer.applicableStyles.includes(selectedStyle)) continue
+      if (offer.applicableStyles.length > 0 && !offer.applicableStyles.includes(style)) continue
       
       const discount = calculateDiscount(basePrice, offer)
       if (discount > bestDiscount) {
@@ -161,172 +115,197 @@ export function PricingTable({ pricing, offers }: PricingTableProps) {
     )
   }
 
-  if (!selectedStyle || styles.length === 0) {
-    return <div>Loading...</div>
+  // Group pricing by style
+  const pricingByStyle = pricing.reduce((acc, price) => {
+    if (!acc[price.style]) {
+      acc[price.style] = []
+    }
+    acc[price.style].push(price)
+    return acc
+  }, {} as Record<string, PricingItem[]>)
+
+  // Sort sizes in a logical order
+  const sizeOrder = ['8x10', '11x14', '16x20', '18x24']
+  const sortPricing = (items: PricingItem[]) => {
+    return items.sort((a, b) => {
+      // First sort by number of faces
+      if (a.numberOfFaces !== b.numberOfFaces) {
+        return a.numberOfFaces - b.numberOfFaces
+      }
+      // Then sort by size
+      const aIndex = sizeOrder.indexOf(a.size)
+      const bIndex = sizeOrder.indexOf(b.size)
+      return aIndex - bIndex
+    })
   }
 
   return (
-    <div className="space-y-8">
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-        <Select
-          label="Art Style"
-          value={selectedStyle}
-          onChange={handleStyleChange}
-          options={styles.map(style => ({ value: style, label: style }))}
-        />
-        
-        <Select
-          label="Number of People"
-          value={selectedFaces.toString()}
-          onChange={handleFacesChange}
-          options={faceCounts.map(count => ({ 
-            value: count.toString(), 
-            label: count === 1 ? '1 Person' : `${count} People` 
-          }))}
-        />
+    <div className="space-y-16">
+      {/* Style Tabs */}
+      <div className="flex justify-center">
+        <div className="inline-flex bg-gray-100 dark:bg-gray-800 rounded-2xl p-2">
+          {styles.map((style) => (
+            <button
+              key={style}
+              onClick={() => setSelectedStyle(style)}
+              className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 ${
+                selectedStyle === style
+                  ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-md'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {style}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Pricing Cards */}
-      {sizePricing.length > 0 ? (
-        <div ref={containerRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {sizePricing.map((price, index) => {
-            const priceData = getPriceWithOffer(price.basePrice)
-            const isPopular = index === 1 // Middle option is popular
+      {/* Pricing Grid */}
+      <div ref={containerRef}>
+        {selectedStyle && pricingByStyle[selectedStyle] && (
+          <div className="space-y-12">
+            {/* Group by number of faces */}
+            {[1, 2, 3, 4, 5].map((faceCount) => {
+              const facePricing = sortPricing(
+                pricingByStyle[selectedStyle].filter(p => p.numberOfFaces === faceCount)
+              )
+              
+              if (facePricing.length === 0) return null
 
-            return (
-              <div
-                key={`${price.style}-${price.size}-${price.numberOfFaces}`}
-                className={`pricing-card relative p-8 rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-2 ${
-                  isPopular
-                    ? 'bg-primary-600 text-white scale-105 shadow-xl'
-                    : 'bg-white dark:bg-gray-800 hover:shadow-xl'
-                }`}
-              >
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full text-sm font-semibold">
-                      Most Popular
-                    </span>
+              return (
+                <div key={faceCount} className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      {faceCount === 1 ? '1 Person' : `${faceCount} People`}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {selectedStyle} portraits for {faceCount === 1 ? 'individual' : 'group'} sessions
+                    </p>
                   </div>
-                )}
 
-                <div className="text-center mb-8">
-                  <h3 className={`text-2xl font-bold mb-2 ${
-                    isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {price.size}
-                  </h3>
-                  <p className={`text-sm mb-4 ${
-                    isPopular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'
-                  }`}>
-                    {selectedStyle} • {selectedFaces} {selectedFaces === 1 ? 'Person' : 'People'}
-                  </p>
-                  
-                  <div className="space-y-1">
-                    {priceData.discountAmount > 0 ? (
-                      <>
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className={`text-3xl font-bold ${
-                            isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
-                          }`}>
-                            {formatPrice(priceData.finalPrice)}
-                          </span>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                    {facePricing.map((price, index) => {
+                      const priceData = getPriceWithOffer(price.basePrice, price.style)
+                      const isPopular = index === 1 && facePricing.length > 2 // Second option if multiple
+
+                      return (
+                        <div
+                          key={`${price.style}-${price.size}-${price.numberOfFaces}`}
+                          className={`pricing-card relative p-6 rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 ${
+                            isPopular
+                              ? 'bg-primary-600 text-white scale-105 shadow-xl ring-2 ring-primary-200'
+                              : 'bg-white dark:bg-gray-800 hover:shadow-xl'
+                          }`}
+                        >
+                          {isPopular && (
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                              <div className="flex items-center bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-semibold">
+                                <Star className="w-3 h-3 mr-1 fill-current" />
+                                Popular
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="text-center mb-6">
+                            <h4 className={`text-xl font-bold mb-2 ${
+                              isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {price.size}
+                            </h4>
+                            
+                            <div className="space-y-1">
+                              {priceData.discountAmount > 0 ? (
+                                <>
+                                  <div className={`text-2xl font-bold ${
+                                    isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
+                                  }`}>
+                                    {formatPrice(priceData.finalPrice)}
+                                  </div>
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <span className={`text-sm line-through ${
+                                      isPopular ? 'text-primary-200' : 'text-gray-500'
+                                    }`}>
+                                      {formatPrice(priceData.originalPrice)}
+                                    </span>
+                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                                      Save {Math.round((priceData.discountAmount / priceData.originalPrice) * 100)}%
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className={`text-2xl font-bold ${
+                                  isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
+                                }`}>
+                                  {formatPrice(priceData.originalPrice)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Features */}
+                          <ul className="space-y-2 mb-6">
+                            {[
+                              'Professional Artist',
+                              'High Resolution',
+                              'Digital Delivery',
+                              'Quality Guarantee'
+                            ].map((feature) => (
+                              <li key={feature} className="flex items-center space-x-2">
+                                <Check className={`w-4 h-4 ${
+                                  isPopular ? 'text-primary-200' : 'text-green-500'
+                                }`} />
+                                <span className={`text-sm ${
+                                  isPopular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'
+                                }`}>
+                                  {feature}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <Link href="/order">
+                            <Button
+                              className={`w-full ${
+                                isPopular
+                                  ? 'bg-white text-primary-600 hover:bg-gray-100'
+                                  : ''
+                              }`}
+                              variant={isPopular ? 'default' : 'outline'}
+                              size="sm"
+                            >
+                              Order Now
+                            </Button>
+                          </Link>
                         </div>
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className={`text-lg line-through ${
-                            isPopular ? 'text-primary-200' : 'text-gray-500'
-                          }`}>
-                            {formatPrice(priceData.originalPrice)}
-                          </span>
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                            Save {Math.round((priceData.discountAmount / priceData.originalPrice) * 100)}%
-                          </span>
-                        </div>
-                        {priceData.offer && (
-                          <p className={`text-xs ${
-                            isPopular ? 'text-primary-200' : 'text-gray-500'
-                          }`}>
-                            {priceData.offer.title}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <div className={`text-3xl font-bold ${
-                        isPopular ? 'text-white' : 'text-gray-900 dark:text-white'
-                      }`}>
-                        {formatPrice(priceData.originalPrice)}
-                      </div>
-                    )}
+                      )
+                    })}
                   </div>
                 </div>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8">
-                  {[
-                    'Professional Artist',
-                    'High Resolution Scan',
-                    'Digital Delivery',
-                    'Unlimited Revisions',
-                    selectedStyle === 'Charcoal' ? 'Rich Texture & Depth' : 'Fine Line Detail'
-                  ].map((feature) => (
-                    <li key={feature} className="flex items-center space-x-3">
-                      <Check className={`w-5 h-5 ${
-                        isPopular ? 'text-primary-200' : 'text-green-500'
-                      }`} />
-                      <span className={`text-sm ${
-                        isPopular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link href="/order">
-                  <Button
-                    className={`w-full ${
-                      isPopular
-                        ? 'bg-white text-primary-600 hover:bg-gray-100'
-                        : ''
-                    }`}
-                    variant={isPopular ? 'default' : 'outline'}
-                  >
-                    Order Now
-                  </Button>
-                </Link>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <div className="text-6xl">💰</div>
+              )
+            })}
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            No pricing available
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Pricing for {selectedStyle} with {selectedFaces} {selectedFaces === 1 ? 'person' : 'people'} is not configured yet.
-          </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Active Offers Display */}
       {offers.filter(o => !o.couponCode).length > 0 && (
-        <div className="mt-12 p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            🎉 Active Offers
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4">
+        <div className="mt-16 p-8 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              🎉 Special Offers
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Limited time discounts automatically applied to eligible orders
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {offers.filter(o => !o.couponCode).map((offer) => (
-              <div key={offer.id} className="p-4 bg-white dark:bg-gray-800 rounded-lg">
-                <h4 className="font-medium text-gray-900 dark:text-white">
+              <div key={offer.id} className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                <h4 className="font-semibold text-gray-900 dark:text-white text-lg mb-2">
                   {offer.title}
                 </h4>
                 {offer.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     {offer.description}
                   </p>
                 )}

@@ -1,18 +1,18 @@
-import { HeroSection } from '@/components/sections/hero-section'
-import { FeaturesSection } from '@/components/sections/features-section'
-import { GalleryPreview } from '@/components/sections/gallery-preview'
-import { PricingPreview } from '@/components/sections/pricing-preview'
-import { CTASection } from '@/components/sections/cta-section'
+import { PortfolioGrid } from '@/components/sections/portfolio-grid'
+import { HeroVideo } from '@/components/sections/hero-video'
+import { ExhibitionsSection } from '@/components/sections/exhibitions-section'
+import { Footer } from '@/components/layout/footer'
 import { PageTransition } from '@/components/animations/page-transition'
 
 export default function HomePage() {
   return (
     <PageTransition>
-      <HeroSection />
-      <FeaturesSection />
-      <GalleryPreview />
-      <PricingPreview />
-      <CTASection />
+      <div className="min-h-screen bg-black text-white">
+        <HeroVideo />
+        <PortfolioGrid />
+        <ExhibitionsSection />
+        <Footer />
+      </div>
     </PageTransition>
   )
 }

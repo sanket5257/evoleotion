@@ -1,154 +1,129 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Clock, CheckCircle } from 'lucide-react'
+import { useRef } from 'react'
+import { Clock, Calendar } from 'lucide-react'
 
 const timelineEvents = [
   {
     time: 'Day 1',
     title: 'Order Received',
     description: 'Your order is confirmed and assigned to our best-matched artist.',
-    status: 'completed',
+    duration: '< 1 hour',
   },
   {
     time: 'Day 1-2',
     title: 'Artist Review',
     description: 'Artist studies your photos and plans the portrait composition.',
-    status: 'completed',
+    duration: '1-2 days',
   },
   {
     time: 'Day 2-4',
     title: 'Portrait Creation',
     description: 'Artist creates your portrait with meticulous attention to detail.',
-    status: 'in-progress',
+    duration: '2-3 days',
   },
   {
     time: 'Day 4',
     title: 'Quality Check',
     description: 'Internal quality review ensures the portrait meets our standards.',
-    status: 'pending',
+    duration: '< 1 day',
   },
   {
     time: 'Day 5',
     title: 'Preview Sent',
     description: 'High-quality preview sent to you for approval and feedback.',
-    status: 'pending',
+    duration: '< 1 hour',
   },
   {
     time: 'Day 5-7',
     title: 'Revisions (if needed)',
     description: 'Artist makes any requested changes to perfect your portrait.',
-    status: 'pending',
+    duration: '1-2 days',
   },
   {
     time: 'Day 7-10',
     title: 'Final Delivery',
     description: 'Approved portrait is printed and shipped to your address.',
-    status: 'pending',
+    duration: '2-3 days',
   },
 ]
 
-export function ProcessTimeline() {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const items = container.querySelectorAll('.timeline-item')
-    
-    gsap.fromTo(
-      items,
-      {
-        x: -50,
-        opacity: 0,
-      },
-      {
-        x: 0,
-        opacity: 1,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top 70%',
-          toggleActions: 'play none none reverse',
-        },
-      }
-    )
-  }, [])
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400'
-      case 'in-progress':
-        return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400'
-      default:
-        return 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-5 h-5" />
-      case 'in-progress':
-        return <Clock className="w-5 h-5 animate-pulse" />
-      default:
-        return <Clock className="w-5 h-5" />
-    }
-  }
+export default function ProcessTimeline() {
+  const containerRef = useRef(null)
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Typical Timeline
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Here's what happens from order to delivery
-        </p>
-      </div>
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-16 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 px-5 py-2.5 rounded-full mb-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-gray-700 dark:text-gray-300 font-semibold">7-10 Day Process</span>
+          </div>
+          <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+            Your Portrait Journey
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Every masterpiece follows our carefully crafted process
+          </p>
+        </div>
 
-      <div ref={containerRef} className="relative">
-        {/* Timeline Line */}
-        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
-        
-        <div className="space-y-8">
-          {timelineEvents.map((event, index) => (
-            <div key={index} className="timeline-item relative flex items-start space-x-6">
-              {/* Timeline Dot */}
-              <div className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-full ${getStatusColor(event.status)}`}>
-                {getStatusIcon(event.status)}
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div ref={containerRef} className="relative">
+          <div className="grid lg:grid-cols-2 gap-6">
+            {timelineEvents.map((event, index) => (
+              <div key={index} className="timeline-item group">
+                <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-gray-700 h-full">
+                  {/* Step Number */}
+                  <div className="flex items-center justify-end mb-4">
+                    <span className="text-2xl font-bold text-gray-300 dark:text-gray-600">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  {/* Title and Time */}
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                     {event.title}
                   </h3>
-                  <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
-                    {event.time}
-                  </span>
+                  <div className="flex items-center space-x-4 mb-4 text-sm">
+                    <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium">
+                      {event.time}
+                    </span>
+                    <div className="flex items-center text-gray-500 dark:text-gray-400">
+                      <Clock className="w-4 h-4 mr-1.5" />
+                      {event.duration}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {event.description}
+                  </p>
+
+                  {/* Hover Effect Indicator */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl transition-all duration-300 bg-blue-400" />
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary Card */}
+        <div className="mt-12 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Real-Time Updates
+                </h4>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {event.description}
+                  Receive WhatsApp notifications at every milestone and track your order status anytime through your personal dashboard. Timelines may vary based on artwork complexity and current demand.
                 </p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-
-      <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>Note:</strong> Timeline may vary based on complexity and current order volume. 
-          We'll keep you updated throughout the process via WhatsApp.
-        </p>
       </div>
     </div>
   )

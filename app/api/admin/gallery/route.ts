@@ -27,14 +27,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Gallery POST request received')
-    
     const sessionResult = await requireAdminFromRequest(request)
     if (sessionResult instanceof NextResponse) {
       return sessionResult // Return unauthorized response
     }
 
-    console.log('Admin authenticated, processing form data')
     const formData = await request.formData()
     
     const file = formData.get('image') as File
@@ -44,16 +41,7 @@ export async function POST(request: NextRequest) {
     const tags = formData.get('tags') as string
     const isActive = formData.get('isActive') === 'true'
 
-    console.log('Form data received:', { 
-      hasFile: !!file, 
-      title, 
-      style, 
-      fileSize: file?.size,
-      fileName: file?.name 
-    })
-
     if (!file || !title || !style) {
-      console.log('Missing required fields:', { hasFile: !!file, title, style })
       return NextResponse.json({ 
         error: 'Missing required fields',
         details: { hasFile: !!file, title: !!title, style: !!style }
@@ -62,17 +50,13 @@ export async function POST(request: NextRequest) {
 
     // Check Cloudinary config
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.log('Cloudinary configuration missing')
       return NextResponse.json({ error: 'Cloudinary configuration missing' }, { status: 500 })
     }
 
-    console.log('Converting file to buffer...')
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    console.log('Buffer created, size:', buffer.length)
 
-    console.log('Uploading to Cloudinary...')
     // Configure and use Cloudinary
     const cloudinary = configureCloudinary()
     
@@ -91,22 +75,18 @@ export async function POST(request: NextRequest) {
             console.error('Cloudinary upload error:', error)
             reject(error)
           } else {
-            console.log('Cloudinary upload success:', result?.public_id)
             resolve(result)
           }
         }
       ).end(buffer)
     }) as any
 
-    console.log('Getting next order number...')
     // Get the highest order number and increment
     const lastImage = await prisma.galleryImage.findFirst({
       orderBy: { order: 'desc' }
     })
     const nextOrder = (lastImage?.order || 0) + 1
-    console.log('Next order:', nextOrder)
 
-    console.log('Saving to database...')
     // Save to database
     const image = await prisma.galleryImage.create({
       data: {
@@ -121,14 +101,6 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    console.log('Image created successfully:', image.id)
-    console.log('Image details:', {
-      id: image.id,
-      title: image.title,
-      imageUrl: image.imageUrl,
-      publicId: image.publicId,
-      isActive: image.isActive
-    })
     return NextResponse.json(image)
   } catch (error) {
     console.error('Error creating gallery image:', error)

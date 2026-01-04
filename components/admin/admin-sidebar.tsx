@@ -51,7 +51,7 @@ export function AdminSidebar() {
           <div className="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600" />
             <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-              Admin Panel
+              Evoleotion Admin
             </span>
           </div>
 

@@ -1,23 +1,35 @@
 import { SignUpForm } from '@/components/auth/signup-form'
 import { PageTransition } from '@/components/animations/page-transition'
+import Link from 'next/link'
 
 export default function SignUpPage() {
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center py-12">
         <div className="max-w-md w-full mx-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div className="border border-white/20 p-8">
             <div className="text-center mb-8">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Link href="/" className="text-3xl font-light tracking-wider hover:text-gray-300 transition-colors">
+                Evoleotion
+              </Link>
+              <h1 className="text-2xl font-light tracking-wide mt-8 mb-2">
                 Create Your Account
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className="text-gray-400">
                 Join us to start creating beautiful custom portraits
               </p>
             </div>
 
             <SignUpForm />
+            
+            <div className="mt-8 text-center">
+              <p className="text-gray-400 text-sm">
+                Already have an account?{' '}
+                <Link href="/auth/signin" className="text-white hover:text-gray-300 transition-colors">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

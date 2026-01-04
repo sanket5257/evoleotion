@@ -6,6 +6,11 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function GET() {
+  // Only allow in development or with admin access
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not allowed in production' }, { status: 403 })
+  }
+
   try {
     // Configure Cloudinary dynamically
     const cloudinary = configureCloudinary()

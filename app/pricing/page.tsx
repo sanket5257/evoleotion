@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { PricingTable } from '@/components/pricing/pricing-table'
 import { PageTransition } from '@/components/animations/page-transition'
-import { TextReveal } from '@/components/animations/text-reveal'
+import { Star, Shield, Clock, Palette } from 'lucide-react'
+import { Navbar } from '@/components/layout/navbar'
 
 // Force dynamic rendering - prevents static generation at build time
 export const dynamic = 'force-dynamic'
@@ -50,48 +51,105 @@ export default async function PricingPage() {
 
   return (
     <PageTransition>
-      <div className="py-24">
-        <div className="container-width section-padding">
-          <div className="text-center mb-16">
-            <TextReveal className="text-4xl lg:text-6xl font-bold mb-6">
-              Transparent
-              <span className="gradient-text block">Pricing</span>
-            </TextReveal>
-            <TextReveal 
-              className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
-              delay={0.2}
-            >
-              Professional charcoal and pencil portraits crafted by skilled artists. 
-              All prices include unlimited revisions and our satisfaction guarantee.
-            </TextReveal>
+      <div className="min-h-screen bg-black text-white">
+        {/* Navigation */}
+        <Navbar />
+
+        {/* Hero Section */}
+        <div className="px-8 py-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+                Pricing
+              </h1>
+              <p className="text-lg text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12">
+                Professional pencil and charcoal portraits crafted by skilled artists. 
+                Choose your style, size, and number of people. All prices include our satisfaction guarantee.
+              </p>
+              
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                  <span>500+ Happy Customers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-green-500" />
+                  <span>100% Satisfaction Guarantee</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-500" />
+                  <span>3-5 Day Delivery</span>
+                </div>
+              </div>
+            </div>
+
+            <PricingTable pricing={pricing} offers={offers} />
           </div>
+        </div>
 
-          <PricingTable pricing={pricing} offers={offers} />
-
-          {/* Additional Info */}
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-              <div className="text-3xl mb-4">✏️</div>
-              <h3 className="text-lg font-semibold mb-2">Charcoal & Pencil Art</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Specializing in charcoal and pencil portraits with exceptional detail
+        {/* Features Section */}
+        <div className="px-8 py-24 border-t border-white/10">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-light tracking-wider mb-4">
+                What's Included
+              </h2>
+              <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                Every portrait comes with premium features to ensure you get exactly what you envision
               </p>
             </div>
-            
-            <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-              <div className="text-3xl mb-4">🔄</div>
-              <h3 className="text-lg font-semibold mb-2">Unlimited Revisions</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                We'll keep refining until you're completely satisfied
-              </p>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="w-16 h-16 mx-auto mb-6 border border-white/20 rounded-full flex items-center justify-center">
+                  <Palette className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-light mb-3">Professional Artists</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Skilled artists with years of experience in charcoal and pencil portrait techniques
+                </p>
+              </div>
+
+              <div className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="w-16 h-16 mx-auto mb-6 border border-white/20 rounded-full flex items-center justify-center">
+                  <div className="text-2xl">✨</div>
+                </div>
+                <h3 className="text-xl font-light mb-3">Premium Quality</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  High-quality artwork with attention to detail and professional finishing
+                </p>
+              </div>
+
+              <div className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="w-16 h-16 mx-auto mb-6 border border-white/20 rounded-full flex items-center justify-center">
+                  <div className="text-2xl">📱</div>
+                </div>
+                <h3 className="text-xl font-light mb-3">Digital Delivery</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  High-resolution digital files delivered within 3-5 business days
+                </p>
+              </div>
+
+              <div className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors">
+                <div className="w-16 h-16 mx-auto mb-6 border border-white/20 rounded-full flex items-center justify-center">
+                  <div className="text-2xl">🎯</div>
+                </div>
+                <h3 className="text-xl font-light mb-3">Perfect Quality</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Museum-quality artwork suitable for printing and framing at any size
+                </p>
+              </div>
             </div>
             
-            <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-              <div className="text-3xl mb-4">🚚</div>
-              <h3 className="text-lg font-semibold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Digital delivery in 3-5 days, physical prints in 7-10 days
-              </p>
+            {/* Order CTA */}
+            <div className="text-center mt-16">
+              <a 
+                href="/order"
+                className="inline-block px-12 py-4 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300"
+              >
+                Order Your Portrait Now
+              </a>
             </div>
           </div>
         </div>

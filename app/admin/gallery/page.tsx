@@ -31,7 +31,7 @@ export default async function AdminGalleryPage() {
       <div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Gallery Management</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Manage your portfolio images and showcase your best work
+          Manage your sketch portfolio images and showcase your best work
         </p>
       </div>
 

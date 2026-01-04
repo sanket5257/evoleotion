@@ -28,7 +28,7 @@ export default async function AdminPricingPage() {
       <div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pricing Management</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Configure pricing rules for different styles, sizes, and number of faces
+          Configure pricing rules for different sketch styles, sizes, and number of faces
         </p>
       </div>
 

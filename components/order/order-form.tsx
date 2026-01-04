@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-context'
 import { Upload, X, Calculator } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,7 +17,7 @@ interface OrderFormProps {
 
 export function OrderForm({ pricing, offers }: OrderFormProps) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   
   const [formData, setFormData] = useState({
     customerName: '',
@@ -38,6 +37,57 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
     finalPrice: 0,
     appliedOffer: null as any,
   })
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    )
+  }
+
+  // Show authentication required message if user is not logged in
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <div className="border border-white/20 p-8 max-w-md mx-auto">
+          <h2 className="text-2xl font-light tracking-wide mb-6">
+            Sign Up Required
+          </h2>
+          <p className="text-gray-400 mb-8 leading-relaxed">
+            You need to create an account to place an order. This helps us keep track of your orders and provide better customer service.
+          </p>
+          
+          <div className="space-y-4">
+            <a 
+              href="/auth/signup"
+              className="block w-full px-6 py-3 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300"
+            >
+              Create Account
+            </a>
+            <a 
+              href="/auth/signin"
+              className="block w-full px-6 py-3 border border-white/30 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300"
+            >
+              Already have an account? Sign In
+            </a>
+          </div>
+          
+          <div className="mt-8 text-sm text-gray-500">
+            <p>Why do we require an account?</p>
+            <ul className="mt-2 text-xs space-y-1">
+              <li>• Track your order status</li>
+              <li>• Save your preferences</li>
+              <li>• Provide customer support</li>
+              <li>• Send order updates</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Pre-fill form data for logged-in users
   useEffect(() => {
@@ -196,8 +246,8 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+      <div className="border border-white/20 p-8">
+        <h2 className="text-2xl font-light tracking-wide text-white mb-6">
           Customer Information
         </h2>
         
@@ -207,6 +257,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             value={formData.customerName}
             onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
             required
+            className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
           
           <Input
@@ -215,6 +266,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             value={formData.customerEmail}
             onChange={(e) => setFormData(prev => ({ ...prev, customerEmail: e.target.value }))}
             required
+            className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
           
           <Input
@@ -222,12 +274,13 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             value={formData.customerPhone}
             onChange={(e) => setFormData(prev => ({ ...prev, customerPhone: e.target.value }))}
             required
+            className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+      <div className="border border-white/20 p-8">
+        <h2 className="text-2xl font-light tracking-wide text-white mb-6">
           Portrait Details
         </h2>
         
@@ -241,6 +294,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
               ...styles.map(style => ({ value: style, label: style }))
             ]}
             required
+            className="bg-black border-white/20 text-white focus:border-white/40"
           />
           
           <Select
@@ -253,6 +307,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             ]}
             disabled={!formData.style}
             required
+            className="bg-black border-white/20 text-white focus:border-white/40"
           />
           
           <Select
@@ -267,6 +322,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
               { value: '5', label: '5+ People' },
             ]}
             required
+            className="bg-black border-white/20 text-white focus:border-white/40"
           />
         </div>
 
@@ -277,19 +333,20 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             onChange={(e) => setFormData(prev => ({ ...prev, specialNotes: e.target.value }))}
             placeholder="Any special requests or instructions for the artist..."
             rows={3}
+            className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+      <div className="border border-white/20 p-8">
+        <h2 className="text-2xl font-light tracking-wide text-white mb-6">
           Upload Images
         </h2>
         
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+          <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center">
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-400 mb-4">
               Upload your photos (Max 5 images, 10MB each)
             </p>
             <input
@@ -302,7 +359,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             />
             <label 
               htmlFor="image-upload" 
-              className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 px-4 py-2 text-sm cursor-pointer"
+              className="inline-flex items-center justify-center px-4 py-2 border border-white/30 text-sm uppercase tracking-widest text-white hover:bg-white hover:text-black transition-colors duration-300 cursor-pointer"
             >
               Choose Files
             </label>
@@ -333,22 +390,22 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
 
       {/* Price Calculation */}
       {priceCalculation.basePrice > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
+        <div className="border border-white/20 p-8">
           <div className="flex items-center space-x-2 mb-6">
-            <Calculator className="w-6 h-6 text-primary-600" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <Calculator className="w-6 h-6 text-white" />
+            <h2 className="text-2xl font-light tracking-wide text-white">
               Price Calculation
             </h2>
           </div>
           
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
-              <span className="font-medium">{formatPrice(priceCalculation.basePrice)}</span>
+              <span className="text-gray-400">Base Price:</span>
+              <span className="font-medium text-white">{formatPrice(priceCalculation.basePrice)}</span>
             </div>
             
             {priceCalculation.discountAmount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-green-400">
                 <span>
                   Discount ({priceCalculation.appliedOffer?.title}):
                 </span>
@@ -358,10 +415,10 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
               </div>
             )}
             
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-primary-600">
+            <div className="border-t border-white/20 pt-3">
+              <div className="flex justify-between text-lg font-medium">
+                <span className="text-white">Total:</span>
+                <span className="text-white">
                   {formatPrice(priceCalculation.finalPrice)}
                 </span>
               </div>
@@ -375,21 +432,20 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
               value={formData.couponCode}
               onChange={(e) => setFormData(prev => ({ ...prev, couponCode: e.target.value }))}
               placeholder="Enter coupon code"
+              className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
             />
           </div>
         </div>
       )}
 
       <div className="text-center">
-        <Button
+        <button
           type="submit"
-          size="lg"
-          loading={loading}
-          disabled={images.length === 0 || priceCalculation.finalPrice === 0}
-          className="px-12"
+          disabled={images.length === 0 || priceCalculation.finalPrice === 0 || loading}
+          className="px-12 py-4 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Place Order - {formatPrice(priceCalculation.finalPrice)}
-        </Button>
+          {loading ? 'Processing...' : `Place Order - ${formatPrice(priceCalculation.finalPrice)}`}
+        </button>
       </div>
     </form>
   )

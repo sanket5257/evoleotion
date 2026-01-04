@@ -1,6 +1,7 @@
 import { OrderForm } from '@/components/order/order-form'
 import { PageTransition } from '@/components/animations/page-transition'
 import { prisma } from '@/lib/prisma'
+import { Navbar } from '@/components/layout/navbar'
 
 // Force dynamic rendering - prevents static generation at build time
 export const dynamic = 'force-dynamic'
@@ -45,16 +46,18 @@ export default async function OrderPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen py-12 bg-gray-50 dark:bg-gray-900">
-        <div className="container-width section-padding">
+      <div className="min-h-screen bg-black text-white">
+        {/* Navigation */}
+        <Navbar />
+
+        <div className="px-8 py-16">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-                Create Your
-                <span className="gradient-text block">Custom Portrait</span>
+              <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+                Order
               </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Fill out the form below to start your portrait journey. 
+              <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                Create your custom pencil and charcoal portrait. 
                 Our artists will transform your photos into stunning artwork.
               </p>
             </div>
