@@ -51,6 +51,15 @@ COOKIE_DOMAIN=yourdomain.com
 - **Cause**: Incorrect DATABASE_URL or connection limits
 - **Solution**: Verify your PostgreSQL connection string and connection pool settings
 
+### DYNAMIC_SERVER_USAGE Error
+- **Cause**: API routes using dynamic functions without proper configuration
+- **Solution**: All API routes that use sessions are now properly configured with `export const dynamic = 'force-dynamic'`
+- **Note**: This error should be resolved after the latest updates
+
+### Build/Deployment Errors
+- **Cause**: Missing environment variables during build
+- **Solution**: Ensure all required environment variables are set in Vercel dashboard before deployment
+
 ## Testing
 
 After setting up environment variables:

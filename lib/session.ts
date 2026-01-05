@@ -70,6 +70,11 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
 
 export async function createSession(user: { id: string; email: string; name?: string; role: string }) {
   try {
+    // Ensure we're in a server context
+    if (typeof window !== 'undefined') {
+      throw new Error('createSession should only be called on the server')
+    }
+
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     const session = await encrypt({
       userId: user.id,
@@ -106,6 +111,11 @@ export async function createSession(user: { id: string; email: string; name?: st
 
 export async function getSession(): Promise<SessionPayload | null> {
   try {
+    // Ensure we're in a server context
+    if (typeof window !== 'undefined') {
+      throw new Error('getSession should only be called on the server')
+    }
+
     const cookieStore = cookies()
     const session = cookieStore.get('session')?.value
     if (!session) return null
@@ -119,7 +129,11 @@ export async function getSession(): Promise<SessionPayload | null> {
       
       if (expiresAt < now) {
         // Session expired, delete it
-        deleteSession()
+        try {
+          deleteSession()
+        } catch (deleteError) {
+          console.warn('Failed to delete expired session:', deleteError)
+        }
         return null
       }
       
@@ -145,13 +159,23 @@ export async function getSession(): Promise<SessionPayload | null> {
   } catch (error) {
     console.error('Session retrieval error:', error)
     // Clear invalid session
-    deleteSession()
+    try {
+      deleteSession()
+    } catch (deleteError) {
+      console.warn('Failed to delete invalid session:', deleteError)
+    }
     return null
   }
 }
 
 export function deleteSession() {
   try {
+    // Ensure we're in a server context
+    if (typeof window !== 'undefined') {
+      console.warn('deleteSession should only be called on the server')
+      return
+    }
+
     const cookieStore = cookies()
     
     // Simplified deletion that works better with Vercel
