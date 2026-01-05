@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { configureCloudinary } from '@/lib/cloudinary'
+import { deleteFromSupabase } from '@/lib/supabase'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -139,14 +139,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 })
     }
 
-    // Configure Cloudinary only when needed and if publicId exists
+    // Delete from Supabase Storage if publicId exists
     if (image.publicId) {
       try {
-        const cloudinary = configureCloudinary()
-        await cloudinary.uploader.destroy(image.publicId)
-      } catch (cloudinaryError) {
-        console.error('Error deleting from Cloudinary:', cloudinaryError)
-        // Continue with database deletion even if Cloudinary fails
+        await deleteFromSupabase(image.publicId)
+      } catch (supabaseError) {
+        console.error('Error deleting from Supabase:', supabaseError)
+        // Continue with database deletion even if Supabase fails
       }
     }
 

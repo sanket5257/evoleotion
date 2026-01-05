@@ -2,7 +2,7 @@
 
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { uploadToCloudinary } from '@/lib/cloudinary'
+import { uploadToSupabase } from '@/lib/supabase'
 import { generateOrderNumber, generateWhatsAppUrl } from '@/lib/utils'
 import { orderSchema } from '@/lib/validations'
 
@@ -127,23 +127,22 @@ export async function createOrder(formData: FormData) {
       }
     }
 
-    // Upload images to Cloudinary (with fallback)
+    // Upload images to Supabase (with fallback)
     let uploadedImages: Array<{ secure_url: string; public_id: string }> = []
     
     try {
-      // Check if Cloudinary is configured
-      const hasCloudinaryConfig = !!(
-        process.env.CLOUDINARY_CLOUD_NAME && 
-        process.env.CLOUDINARY_API_KEY && 
-        process.env.CLOUDINARY_API_SECRET
+      // Check if Supabase is configured
+      const hasSupabaseConfig = !!(
+        process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.SUPABASE_SERVICE_ROLE_KEY
       )
 
-      if (hasCloudinaryConfig && typeof uploadToCloudinary === 'function') {
-        // Upload to Cloudinary with timeout
+      if (hasSupabaseConfig && typeof uploadToSupabase === 'function') {
+        // Upload to Supabase with timeout
         const uploadPromises = imageUploads.map(async (file, index) => {
           try {
             return await Promise.race([
-              uploadToCloudinary(file, 'orders'),
+              uploadToSupabase(file, 'orders'),
               new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('Upload timeout')), 30000)
               )
@@ -160,7 +159,7 @@ export async function createOrder(formData: FormData) {
         
         uploadedImages = await Promise.all(uploadPromises)
       } else {
-        // Create placeholder image entries when Cloudinary is not configured
+        // Create placeholder image entries when Supabase is not configured
         uploadedImages = imageUploads.map((file, index) => ({
           secure_url: `/api/placeholder/400/500?name=${encodeURIComponent(file.name)}`,
           public_id: `placeholder-${Date.now()}-${index}`,

@@ -1,9 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eye, Package, Clock, CheckCircle, AlertCircle, X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
 
 interface Order {
@@ -63,6 +61,21 @@ const statusDescriptions = {
 
 export function UserOrders({ orders }: UserOrdersProps) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
+  // Handle modal scroll management
+  useEffect(() => {
+    if (selectedOrder) {
+      document.body.style.overflow = 'hidden'
+      // Scroll to top when modal opens
+      window.scrollTo(0, 0)
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [selectedOrder])
 
   if (orders.length === 0) {
     return (
@@ -222,130 +235,132 @@ export function UserOrders({ orders }: UserOrdersProps) {
 
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-black border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-8">
-              {/* Modal Header */}
-              <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
-                <h3 className="text-3xl font-light tracking-wider text-white">
-                  Order #{selectedOrder.orderNumber}
-                </h3>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-2 hover:bg-white/10 transition-colors"
-                >
-                  <X className="w-6 h-6 text-white" />
-                </button>
-              </div>
-
-              {/* Modal Content */}
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                {/* Order Information */}
-                <div>
-                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Order Information</h4>
-                  <div className="space-y-4 text-gray-400">
-                    <div className="flex justify-between">
-                      <span>Style:</span>
-                      <span className="text-white">{selectedOrder.style}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Size:</span>
-                      <span className="text-white">{selectedOrder.size}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Number of People:</span>
-                      <span className="text-white">{selectedOrder.numberOfFaces}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Order Date:</span>
-                      <span className="text-white">
-                        {new Date(selectedOrder.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                    {selectedOrder.offer && (
-                      <div className="flex justify-between">
-                        <span>Offer Applied:</span>
-                        <span className="text-green-400">{selectedOrder.offer.title}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Pricing Breakdown */}
-                <div>
-                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Pricing Breakdown</h4>
-                  <div className="space-y-4 text-gray-400">
-                    <div className="flex justify-between">
-                      <span>Base Price:</span>
-                      <span className="text-white">{formatPrice(selectedOrder.basePrice)}</span>
-                    </div>
-                    {selectedOrder.discountAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span>Discount:</span>
-                        <span className="text-green-400">-{formatPrice(selectedOrder.discountAmount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-xl font-light border-t border-white/10 pt-4">
-                      <span className="text-white">Total:</span>
-                      <span className="text-white">{formatPrice(selectedOrder.finalPrice)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Special Notes */}
-              {selectedOrder.specialNotes && (
-                <div className="mb-8">
-                  <h4 className="text-xl font-light tracking-wide text-white mb-4">Your Notes</h4>
-                  <div className="p-6 border border-white/10 bg-white/5">
-                    <p className="text-gray-400 leading-relaxed">
-                      {selectedOrder.specialNotes}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Uploaded Photos */}
-              {selectedOrder.images.length > 0 && (
-                <div className="mb-8">
-                  <h4 className="text-xl font-light tracking-wide text-white mb-6">Your Photos</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {selectedOrder.images.map((image) => (
-                      <div key={image.id} className="aspect-square border border-white/10 overflow-hidden">
-                        <img
-                          src={image.imageUrl}
-                          alt="Your uploaded photo"
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Preview Section */}
-              {selectedOrder.previewUrl && (
-                <div className="border border-blue-500/30 bg-blue-500/10 p-6">
-                  <h4 className="text-xl font-light tracking-wide text-blue-400 mb-4">
-                    Preview Available
-                  </h4>
-                  <p className="text-gray-400 mb-6 leading-relaxed">
-                    Your sketch portrait preview is ready for review! Please check it carefully and let us know if you'd like any adjustments.
-                  </p>
-                  <a
-                    href={selectedOrder.previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-8 py-3 bg-blue-600 text-white text-sm uppercase tracking-widest hover:bg-blue-700 transition-colors duration-300"
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start justify-center p-4 sm:p-6">
+            <div className="bg-black border border-white/20 max-w-4xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto my-4">
+              <div className="p-6 sm:p-8">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-white/10">
+                  <h3 className="text-2xl sm:text-3xl font-light tracking-wider text-white">
+                    Order #{selectedOrder.orderNumber}
+                  </h3>
+                  <button
+                    onClick={() => setSelectedOrder(null)}
+                    className="p-2 hover:bg-white/10 transition-colors rounded-full"
                   >
-                    View Preview
-                  </a>
+                    <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </button>
                 </div>
-              )}
+
+                {/* Modal Content */}
+                <div className="grid md:grid-cols-2 gap-8 mb-8">
+                  {/* Order Information */}
+                  <div>
+                    <h4 className="text-xl font-light tracking-wide text-white mb-6">Order Information</h4>
+                    <div className="space-y-4 text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Style:</span>
+                        <span className="text-white">{selectedOrder.style}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Size:</span>
+                        <span className="text-white">{selectedOrder.size}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Number of People:</span>
+                        <span className="text-white">{selectedOrder.numberOfFaces}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Order Date:</span>
+                        <span className="text-white">
+                          {new Date(selectedOrder.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      {selectedOrder.offer && (
+                        <div className="flex justify-between">
+                          <span>Offer Applied:</span>
+                          <span className="text-green-400">{selectedOrder.offer.title}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pricing Breakdown */}
+                  <div>
+                    <h4 className="text-xl font-light tracking-wide text-white mb-6">Pricing Breakdown</h4>
+                    <div className="space-y-4 text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Base Price:</span>
+                        <span className="text-white">{formatPrice(selectedOrder.basePrice)}</span>
+                      </div>
+                      {selectedOrder.discountAmount > 0 && (
+                        <div className="flex justify-between">
+                          <span>Discount:</span>
+                          <span className="text-green-400">-{formatPrice(selectedOrder.discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xl font-light border-t border-white/10 pt-4">
+                        <span className="text-white">Total:</span>
+                        <span className="text-white">{formatPrice(selectedOrder.finalPrice)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Special Notes */}
+                {selectedOrder.specialNotes && (
+                  <div className="mb-8">
+                    <h4 className="text-xl font-light tracking-wide text-white mb-4">Your Notes</h4>
+                    <div className="p-6 border border-white/10 bg-white/5">
+                      <p className="text-gray-400 leading-relaxed">
+                        {selectedOrder.specialNotes}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Uploaded Photos */}
+                {selectedOrder.images.length > 0 && (
+                  <div className="mb-8">
+                    <h4 className="text-xl font-light tracking-wide text-white mb-6">Your Photos</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {selectedOrder.images.map((image) => (
+                        <div key={image.id} className="aspect-square border border-white/10 overflow-hidden">
+                          <img
+                            src={image.imageUrl}
+                            alt="Your uploaded photo"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview Section */}
+                {selectedOrder.previewUrl && (
+                  <div className="border border-blue-500/30 bg-blue-500/10 p-6">
+                    <h4 className="text-xl font-light tracking-wide text-blue-400 mb-4">
+                      Preview Available
+                    </h4>
+                    <p className="text-gray-400 mb-6 leading-relaxed">
+                      Your sketch portrait preview is ready for review! Please check it carefully and let us know if you'd like any adjustments.
+                    </p>
+                    <a
+                      href={selectedOrder.previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-8 py-3 bg-blue-600 text-white text-sm uppercase tracking-widest hover:bg-blue-700 transition-colors duration-300"
+                    >
+                      View Preview
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

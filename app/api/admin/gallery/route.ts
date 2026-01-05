@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { configureCloudinary } from '@/lib/cloudinary'
+import { uploadToSupabase } from '@/lib/supabase'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -81,51 +81,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check Cloudinary config
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    // Check Supabase config
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ 
-        error: 'Cloudinary configuration missing',
-        details: 'Please configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET'
+        error: 'Supabase configuration missing',
+        details: 'Please configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
       }, { status: 500 })
     }
 
     let uploadResult
     try {
-      // Convert file to buffer
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      // Configure and use Cloudinary
-      const cloudinary = configureCloudinary()
-      
-      // Upload to Cloudinary with enhanced options
-      uploadResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: 'image',
-            folder: 'gallery',
-            format: 'auto',
-            quality: 'auto:good',
-            fetch_format: 'auto',
-            transformation: [
-              { width: 1200, height: 1500, crop: 'limit', quality: 'auto:good' }
-            ]
-          },
-          (error, result) => {
-            if (error) {
-              console.error('Cloudinary upload error:', error)
-              reject(new Error(`Cloudinary upload failed: ${error.message}`))
-            } else if (!result) {
-              reject(new Error('Cloudinary upload failed: No result returned'))
-            } else {
-              resolve(result)
-            }
-          }
-        )
-        
-        uploadStream.end(buffer)
-      }) as any
-
+      // Upload to Supabase Storage
+      uploadResult = await uploadToSupabase(file, 'gallery')
     } catch (uploadError) {
       console.error('Upload error:', uploadError)
       return NextResponse.json({ 
@@ -163,12 +130,12 @@ export async function POST(request: NextRequest) {
     } catch (dbError) {
       console.error('Database error:', dbError)
       
-      // Try to delete the uploaded image from Cloudinary if database save fails
+      // Try to delete the uploaded image from Supabase if database save fails
       try {
-        const cloudinary = configureCloudinary()
-        await cloudinary.uploader.destroy(uploadResult.public_id)
+        const { deleteFromSupabase } = await import('@/lib/supabase')
+        await deleteFromSupabase(uploadResult.public_id)
       } catch (cleanupError) {
-        console.error('Failed to cleanup Cloudinary image:', cleanupError)
+        console.error('Failed to cleanup Supabase image:', cleanupError)
       }
       
       return NextResponse.json({ 
