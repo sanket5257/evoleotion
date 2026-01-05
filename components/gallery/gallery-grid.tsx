@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { Heart } from 'lucide-react'
 import { GalleryDetailModal } from './gallery-detail-modal'
 
 interface GalleryImage {
@@ -24,6 +25,40 @@ export function GalleryGrid({ images }: GalleryGridProps) {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Check if user is logged in and load favorites
+  useEffect(() => {
+    const checkAuthAndLoadFavorites = async () => {
+      try {
+        // Check if user is logged in by trying to fetch favorites
+        const response = await fetch('/api/favorites')
+        if (response.ok) {
+          setIsLoggedIn(true)
+          const favoritesData = await response.json()
+          setFavorites(new Set(favoritesData.map((img: GalleryImage) => img.id)))
+        } else if (response.status === 401) {
+          setIsLoggedIn(false)
+          // Load from localStorage as fallback for non-logged users
+          const saved = localStorage.getItem('favorites')
+          if (saved) {
+            setFavorites(new Set(JSON.parse(saved)))
+          }
+        }
+      } catch (error) {
+        console.error('Error loading favorites:', error)
+        setIsLoggedIn(false)
+        // Load from localStorage as fallback
+        const saved = localStorage.getItem('favorites')
+        if (saved) {
+          setFavorites(new Set(JSON.parse(saved)))
+        }
+      }
+    }
+
+    checkAuthAndLoadFavorites()
+  }, [])
 
   // Listen for filter changes from parent component
   useEffect(() => {
@@ -44,7 +79,11 @@ export function GalleryGrid({ images }: GalleryGridProps) {
     }
   }, [images])
 
-  const handleImageClick = (image: GalleryImage) => {
+  const handleImageClick = (image: GalleryImage, event: React.MouseEvent) => {
+    // Don't open modal if clicking on favorite button
+    if ((event.target as HTMLElement).closest('.favorite-button')) {
+      return
+    }
     setSelectedImage(image)
     setIsModalOpen(true)
   }
@@ -52,6 +91,66 @@ export function GalleryGrid({ images }: GalleryGridProps) {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedImage(null)
+  }
+
+  const toggleFavorite = async (imageId: string, event: React.MouseEvent) => {
+    event.stopPropagation() // Prevent opening the modal
+    
+    if (!isLoggedIn) {
+      // For non-logged users, just use localStorage
+      const newFavorites = new Set(favorites)
+      if (newFavorites.has(imageId)) {
+        newFavorites.delete(imageId)
+      } else {
+        newFavorites.add(imageId)
+      }
+      setFavorites(newFavorites)
+      localStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)))
+      return
+    }
+
+    try {
+      const isFavorited = favorites.has(imageId)
+      
+      if (isFavorited) {
+        // Remove from favorites
+        const response = await fetch(`/api/favorites/${imageId}`, {
+          method: 'DELETE'
+        })
+        
+        if (response.ok) {
+          const newFavorites = new Set(favorites)
+          newFavorites.delete(imageId)
+          setFavorites(newFavorites)
+          localStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)))
+        }
+      } else {
+        // Add to favorites
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageId })
+        })
+        
+        if (response.ok) {
+          const newFavorites = new Set(favorites)
+          newFavorites.add(imageId)
+          setFavorites(newFavorites)
+          localStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)))
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      // Fallback to localStorage
+      const newFavorites = new Set(favorites)
+      if (newFavorites.has(imageId)) {
+        newFavorites.delete(imageId)
+      } else {
+        newFavorites.add(imageId)
+      }
+      setFavorites(newFavorites)
+      localStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)))
+    }
   }
 
   if (filteredImages.length === 0) {
@@ -71,7 +170,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
           <div
             key={image.id}
             className="group cursor-pointer"
-            onClick={() => handleImageClick(image)}
+            onClick={(e) => handleImageClick(image, e)}
           >
             <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-lg">
               <Image
@@ -117,6 +216,20 @@ export function GalleryGrid({ images }: GalleryGridProps) {
                   </svg>
                 </div>
               </div>
+
+              {/* Favorite Button */}
+              <button
+                onClick={(e) => toggleFavorite(image.id, e)}
+                className={`favorite-button absolute top-2 left-2 p-2 rounded-full backdrop-blur-sm transition-all duration-300 ${
+                  favorites.has(image.id)
+                    ? 'bg-red-500 text-white'
+                    : 'bg-black/50 text-white hover:bg-red-500'
+                } opacity-0 group-hover:opacity-100`}
+              >
+                <Heart 
+                  className={`w-4 h-4 ${favorites.has(image.id) ? 'fill-current' : ''}`} 
+                />
+              </button>
             </div>
           </div>
         ))}

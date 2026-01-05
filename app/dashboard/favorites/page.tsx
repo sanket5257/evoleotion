@@ -17,15 +17,30 @@ async function getUserFavorites() {
       redirect('/auth/signin')
     }
 
-    // For now, we'll get gallery images as potential favorites
-    // In a real app, you'd have a favorites table
+    // Get all gallery images for the favorites manager to work with
     const galleryImages = await prisma.galleryImage.findMany({
       where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
-      take: 20
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        style: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true
+      }
     })
 
-    return { galleryImages, userId: session.userId }
+    // Serialize dates to avoid hydration issues
+    const serializedImages = galleryImages.map(image => ({
+      ...image,
+      createdAt: image.createdAt.toISOString(),
+      updatedAt: image.updatedAt.toISOString(),
+    }))
+
+    return { galleryImages: serializedImages, userId: session.userId }
   } catch (error) {
     console.error('Error fetching favorites:', error)
     return { galleryImages: [], userId: null }

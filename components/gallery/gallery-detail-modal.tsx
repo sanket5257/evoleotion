@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { X, Calendar, Tag, Palette } from 'lucide-react'
+import { X, Calendar, Tag, Palette, Heart } from 'lucide-react'
 
 interface GalleryImage {
   id: string
@@ -23,11 +23,16 @@ interface GalleryDetailModalProps {
 
 export function GalleryDetailModal({ image, isOpen, onClose }: GalleryDetailModalProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && image) {
       document.body.style.overflow = 'hidden'
       setIsLoading(true)
+      
+      // Check favorite status
+      checkFavoriteStatus()
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -35,7 +40,107 @@ export function GalleryDetailModal({ image, isOpen, onClose }: GalleryDetailModa
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen])
+  }, [isOpen, image])
+
+  const checkFavoriteStatus = async () => {
+    if (!image) return
+    
+    try {
+      const response = await fetch(`/api/favorites/${image.id}`)
+      if (response.ok) {
+        setIsLoggedIn(true)
+        const data = await response.json()
+        setIsFavorite(data.isFavorite)
+      } else if (response.status === 401) {
+        setIsLoggedIn(false)
+        // Check localStorage for non-logged users
+        const saved = localStorage.getItem('favorites')
+        if (saved) {
+          const favorites = JSON.parse(saved)
+          setIsFavorite(favorites.includes(image.id))
+        }
+      }
+    } catch (error) {
+      console.error('Error checking favorite status:', error)
+      setIsLoggedIn(false)
+      // Fallback to localStorage
+      const saved = localStorage.getItem('favorites')
+      if (saved) {
+        const favorites = JSON.parse(saved)
+        setIsFavorite(favorites.includes(image.id))
+      }
+    }
+  }
+
+  const toggleFavorite = async () => {
+    if (!image) return
+    
+    if (!isLoggedIn) {
+      // For non-logged users, use localStorage
+      const saved = localStorage.getItem('favorites')
+      const favorites = saved ? JSON.parse(saved) : []
+      
+      if (isFavorite) {
+        const newFavorites = favorites.filter((id: string) => id !== image.id)
+        localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        setIsFavorite(false)
+      } else {
+        const newFavorites = [...favorites, image.id]
+        localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        setIsFavorite(true)
+      }
+      return
+    }
+
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        const response = await fetch(`/api/favorites/${image.id}`, {
+          method: 'DELETE'
+        })
+        
+        if (response.ok) {
+          setIsFavorite(false)
+          // Update localStorage as backup
+          const saved = localStorage.getItem('favorites')
+          const favorites = saved ? JSON.parse(saved) : []
+          const newFavorites = favorites.filter((id: string) => id !== image.id)
+          localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        }
+      } else {
+        // Add to favorites
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageId: image.id })
+        })
+        
+        if (response.ok) {
+          setIsFavorite(true)
+          // Update localStorage as backup
+          const saved = localStorage.getItem('favorites')
+          const favorites = saved ? JSON.parse(saved) : []
+          const newFavorites = [...favorites, image.id]
+          localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      // Fallback to localStorage
+      const saved = localStorage.getItem('favorites')
+      const favorites = saved ? JSON.parse(saved) : []
+      
+      if (isFavorite) {
+        const newFavorites = favorites.filter((id: string) => id !== image.id)
+        localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        setIsFavorite(false)
+      } else {
+        const newFavorites = [...favorites, image.id]
+        localStorage.setItem('favorites', JSON.stringify(newFavorites))
+        setIsFavorite(true)
+      }
+    }
+  }
 
   if (!isOpen || !image) return null
 
@@ -90,10 +195,23 @@ export function GalleryDetailModal({ image, isOpen, onClose }: GalleryDetailModa
               <X className="w-5 h-5 text-white" />
             </button>
 
-            {/* Title */}
-            <h2 className="text-2xl lg:text-3xl font-light text-white mb-4 pr-12 lg:pr-0">
-              {image.title}
-            </h2>
+            {/* Title and Favorite */}
+            <div className="flex items-start justify-between mb-4 pr-12 lg:pr-0">
+              <h2 className="text-2xl lg:text-3xl font-light text-white flex-1">
+                {image.title}
+              </h2>
+              <button
+                onClick={toggleFavorite}
+                className={`ml-4 p-2 rounded-full transition-all duration-300 ${
+                  isFavorite
+                    ? 'bg-red-500 text-white'
+                    : 'bg-gray-800 text-gray-400 hover:bg-red-500 hover:text-white'
+                }`}
+                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+            </div>
 
             {/* Style */}
             <div className="flex items-center gap-2 mb-4">
@@ -134,7 +252,7 @@ export function GalleryDetailModal({ image, isOpen, onClose }: GalleryDetailModa
             )}
 
             {/* Creation Date */}
-            <div className="border-t border-gray-700 pt-4">
+            <div className="border-t border-gray-700 pt-4 mb-6">
               <div className="flex items-center gap-2 text-gray-400">
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm">
@@ -143,8 +261,18 @@ export function GalleryDetailModal({ image, isOpen, onClose }: GalleryDetailModa
               </div>
             </div>
 
+            {/* Favorite Status for Non-logged Users */}
+            {!isLoggedIn && (
+              <div className="mb-6 p-3 bg-yellow-600/20 border border-yellow-600/30 rounded-lg">
+                <p className="text-yellow-300 text-sm">
+                  <Heart className="w-4 h-4 inline mr-1" />
+                  Sign in to sync favorites across devices
+                </p>
+              </div>
+            )}
+
             {/* Call to Action */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg border border-gray-700">
+            <div className="p-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg border border-gray-700">
               <h4 className="text-white font-medium mb-2">Love this style?</h4>
               <p className="text-gray-300 text-sm mb-3">
                 Commission your own custom portrait in this style
