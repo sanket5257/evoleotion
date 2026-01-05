@@ -1,28 +1,76 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger)
-}
-
 export function GSAPProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    // Set default GSAP settings
-    gsap.defaults({
-      duration: 0.8,
-      ease: 'power2.out',
-    })
+  const [isClient, setIsClient] = useState(false)
+  const initialized = useRef(false)
 
-    // Refresh ScrollTrigger on route changes
-    ScrollTrigger.refresh()
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient || initialized.current) return
+
+    try {
+      // Register plugins only on client
+      if (typeof window !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger)
+        
+        // Set default GSAP settings
+        gsap.defaults({
+          duration: 0.8,
+          ease: 'power2.out',
+        })
+
+        // Configure ScrollTrigger for better performance
+        ScrollTrigger.config({
+          autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load',
+          ignoreMobileResize: true
+        })
+
+        initialized.current = true
+      }
+    } catch (error) {
+      console.error('GSAP initialization error:', error)
+    }
 
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill())
+      try {
+        // Clean up ScrollTrigger instances
+        ScrollTrigger.getAll().forEach(trigger => {
+          try {
+            trigger.kill()
+          } catch (e) {
+            console.warn('Error killing ScrollTrigger:', e)
+          }
+        })
+      } catch (error) {
+        console.warn('ScrollTrigger cleanup error:', error)
+      }
     }
-  }, [])
+  }, [isClient])
+
+  // Refresh ScrollTrigger on route changes (client-side only)
+  useEffect(() => {
+    if (!isClient || !initialized.current) return
+
+    const refreshScrollTrigger = () => {
+      try {
+        ScrollTrigger.refresh()
+      } catch (error) {
+        console.warn('ScrollTrigger refresh error:', error)
+      }
+    }
+
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(refreshScrollTrigger, 100)
+    
+    return () => clearTimeout(timeoutId)
+  }, [isClient])
 
   return <>{children}</>
 }

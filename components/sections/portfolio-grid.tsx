@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { VideoLoader } from '@/components/ui/video-loader'
 
@@ -47,6 +47,24 @@ const portfolioItems = [
 
 export function PortfolioGrid() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null)
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  const handleImageError = useCallback((itemId: number) => {
+    setImageErrors(prev => new Set(prev).add(itemId))
+  }, [])
+
+  const handleMouseEnter = useCallback((itemId: number) => {
+    setHoveredItem(itemId)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredItem(null)
+  }, [])
 
   return (
     <section id="work" className="min-h-screen bg-black p-8">
@@ -66,15 +84,15 @@ export function PortfolioGrid() {
               key={item.id}
               className={`
                 relative overflow-hidden cursor-pointer group
-                ${item.size === 'large' ? 'col-span-6 row-span-2' : ''}
-                ${item.size === 'medium' ? 'col-span-4 row-span-1' : ''}
-                ${item.size === 'small' ? 'col-span-3 row-span-1' : ''}
+                ${item.size === 'large' ? 'col-span-12 md:col-span-6 row-span-2' : ''}
+                ${item.size === 'medium' ? 'col-span-12 md:col-span-4 row-span-1' : ''}
+                ${item.size === 'small' ? 'col-span-12 md:col-span-3 row-span-1' : ''}
               `}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
+              onMouseEnter={() => handleMouseEnter(item.id)}
+              onMouseLeave={handleMouseLeave}
             >
               {/* Background Image/Video */}
-              {item.video && hoveredItem === item.id ? (
+              {item.video && hoveredItem === item.id && isClient ? (
                 <VideoLoader
                   src={item.video}
                   className="absolute inset-0 w-full h-full object-cover"
@@ -84,12 +102,23 @@ export function PortfolioGrid() {
                   playsInline
                 />
               ) : (
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+                <>
+                  {imageErrors.has(item.id) ? (
+                    <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                      <p className="text-white/60 text-sm">Image unavailable</p>
+                    </div>
+                  ) : (
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={() => handleImageError(item.id)}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      priority={item.id <= 2} // Prioritize first 2 images
+                    />
+                  )}
+                </>
               )}
               
               {/* Overlay */}

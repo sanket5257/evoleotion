@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-context'
-import { Upload, X, Calculator } from 'lucide-react'
+import { Upload, Calculator, AlertCircle, CheckCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { RemoveButton } from '@/components/ui/remove-button'
+import { RefreshButton } from '@/components/ui/refresh-button'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
 import { createOrder } from '@/app/actions/order-actions'
 
@@ -15,9 +17,17 @@ interface OrderFormProps {
   offers: any[]
 }
 
-export function OrderForm({ pricing, offers }: OrderFormProps) {
+interface FormErrors {
+  [key: string]: string
+}
+
+export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [submitAttempted, setSubmitAttempted] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   const [formData, setFormData] = useState({
     customerName: '',
@@ -29,8 +39,10 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
     specialNotes: '',
     couponCode: '',
   })
+  
   const [images, setImages] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
+  
   const [priceCalculation, setPriceCalculation] = useState({
     basePrice: 0,
     discountAmount: 0,
@@ -38,8 +50,313 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
     appliedOffer: null as any,
   })
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
+  
+  // Calculate price function
+  const calculatePrice = useCallback(() => {
+    try {
+      if (!formData.style || !formData.size || !formData.numberOfFaces || !pricing) {
+        setPriceCalculation({
+          basePrice: 0,
+          discountAmount: 0,
+          finalPrice: 0,
+          appliedOffer: null,
+        })
+        return
+      }
+
+      const priceEntry = pricing.find(p => 
+        p && 
+        p.style === formData.style && 
+        p.size === formData.size && 
+        p.numberOfFaces === formData.numberOfFaces
+      )
+
+      if (!priceEntry || typeof priceEntry.basePrice !== 'number') {
+        setPriceCalculation({
+          basePrice: 0,
+          discountAmount: 0,
+          finalPrice: 0,
+          appliedOffer: null,
+        })
+        return
+      }
+
+      const basePrice = Math.max(0, priceEntry.basePrice)
+      const subtotal = basePrice
+
+      let bestOffer = null
+      let maxDiscount = 0
+
+      try {
+        if (formData.couponCode && offers && offers.length > 0) {
+          const couponOffer = offers.find(o => 
+            o && 
+            o.couponCode === formData.couponCode.toUpperCase() &&
+            (o.minOrderValue ? subtotal >= o.minOrderValue : true) &&
+            (Array.isArray(o.applicableStyles) ? 
+              o.applicableStyles.length === 0 || o.applicableStyles.includes(formData.style) : 
+              true)
+          )
+          
+          if (couponOffer) {
+            const discount = calculateDiscount(subtotal, couponOffer)
+            if (discount > maxDiscount) {
+              maxDiscount = discount
+              bestOffer = couponOffer
+            }
+          }
+        }
+
+        if ((!bestOffer || maxDiscount === 0) && offers && offers.length > 0) {
+          for (const offer of offers) {
+            if (!offer || offer.couponCode) continue
+            
+            if (offer.minOrderValue && subtotal < offer.minOrderValue) continue
+            if (Array.isArray(offer.applicableStyles) && 
+                offer.applicableStyles.length > 0 && 
+                !offer.applicableStyles.includes(formData.style)) continue
+            
+            try {
+              const discount = calculateDiscount(subtotal, offer)
+              if (discount > maxDiscount) {
+                maxDiscount = discount
+                bestOffer = offer
+              }
+            } catch (discountError) {
+              console.warn('Error calculating discount for offer:', offer.id, discountError)
+            }
+          }
+        }
+      } catch (offerError) {
+        console.warn('Error processing offers:', offerError)
+      }
+
+      const finalPrice = Math.max(0, subtotal - maxDiscount)
+
+      setPriceCalculation({
+        basePrice,
+        discountAmount: maxDiscount,
+        finalPrice,
+        appliedOffer: bestOffer,
+      })
+    } catch (error) {
+      console.error('Error calculating price:', error)
+      setPriceCalculation({
+        basePrice: 0,
+        discountAmount: 0,
+        finalPrice: 0,
+        appliedOffer: null,
+      })
+    }
+  }, [formData, pricing, offers])
+
+  // Validate form fields
+  const validateForm = useCallback(() => {
+    const newErrors: FormErrors = {}
+
+    if (!formData.customerName.trim()) {
+      newErrors.customerName = 'Name is required'
+    }
+
+    if (!formData.customerEmail.trim()) {
+      newErrors.customerEmail = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) {
+      newErrors.customerEmail = 'Please enter a valid email'
+    }
+
+    if (!formData.customerPhone.trim()) {
+      newErrors.customerPhone = 'Phone number is required'
+    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(formData.customerPhone.replace(/\s/g, ''))) {
+      newErrors.customerPhone = 'Please enter a valid phone number'
+    }
+
+    if (!formData.style) {
+      newErrors.style = 'Please select an art style'
+    }
+
+    if (!formData.size) {
+      newErrors.size = 'Please select a size'
+    }
+
+    if (images.length === 0) {
+      newErrors.images = 'Please upload at least one image'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }, [formData, images])
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const files = Array.from(e.target.files || [])
+      
+      if (files.length === 0) return
+      
+      const validFiles = files.filter(file => {
+        const isValidType = file.type.startsWith('image/')
+        const isValidSize = file.size <= 10 * 1024 * 1024
+        const hasValidName = file.name && file.name.length > 0
+        return isValidType && isValidSize && hasValidName
+      })
+      
+      if (validFiles.length !== files.length) {
+        setErrors(prev => ({
+          ...prev,
+          images: 'Some files were skipped (invalid type or too large)'
+        }))
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors.images
+          return newErrors
+        })
+      }
+      
+      setImages(prev => [...prev, ...validFiles].slice(0, 5))
+    } catch (error) {
+      console.error('Error handling image upload:', error)
+      setErrors(prev => ({
+        ...prev,
+        images: 'Error uploading images. Please try again.'
+      }))
+    }
+  }, [])
+
+  const removeImage = useCallback((index: number) => {
+    try {
+      setImages(prev => prev.filter((_, i) => i !== index))
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.images
+        return newErrors
+      })
+    } catch (error) {
+      console.error('Error removing image:', error)
+    }
+  }, [])
+
+  const updateFormData = useCallback((field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }, [errors])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitAttempted(true)
+    
+    if (!validateForm()) {
+      return
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    abortControllerRef.current = new AbortController()
+
+    setLoading(true)
+    setErrors({})
+
+    try {
+      const formDataToSend = new FormData()
+      
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formDataToSend.append(key, value.toString())
+        }
+      })
+      
+      if (typeof priceCalculation.basePrice === 'number') {
+        formDataToSend.append('basePrice', priceCalculation.basePrice.toString())
+      }
+      if (typeof priceCalculation.discountAmount === 'number') {
+        formDataToSend.append('discountAmount', priceCalculation.discountAmount.toString())
+      }
+      if (typeof priceCalculation.finalPrice === 'number') {
+        formDataToSend.append('finalPrice', priceCalculation.finalPrice.toString())
+      }
+      if (priceCalculation.appliedOffer?.id) {
+        formDataToSend.append('offerId', priceCalculation.appliedOffer.id)
+      }
+      
+      images.forEach((image, index) => {
+        if (image && image.size > 0) {
+          formDataToSend.append(`image-${index}`, image)
+        }
+      })
+
+      const timeoutId = setTimeout(() => {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort()
+        }
+      }, 30000)
+
+      const result = await createOrder(formDataToSend)
+      clearTimeout(timeoutId)
+      
+      if (result?.success && result?.orderId) {
+        router.push(`/order/success?orderId=${result.orderId}`)
+      } else {
+        setErrors({ submit: result?.error || 'Failed to create order. Please try again.' })
+      }
+    } catch (error) {
+      console.error('Order submission error:', error)
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setErrors({ submit: 'Request timed out. Please try again.' })
+        } else {
+          setErrors({ submit: error.message || 'Failed to create order. Please try again.' })
+        }
+      } else {
+        setErrors({ submit: 'An unexpected error occurred. Please try again.' })
+      }
+    } finally {
+      setLoading(false)
+      abortControllerRef.current = null
+    }
+  }, [formData, priceCalculation, images, validateForm, router])
+
+  // Mount effect
+  useEffect(() => {
+    setMounted(true)
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
+  // Pre-fill form data for logged-in users
+  useEffect(() => {
+    if (user && mounted) {
+      setFormData(prev => ({
+        ...prev,
+        customerName: user.name || '',
+        customerEmail: user.email || '',
+      }))
+    }
+  }, [user, mounted])
+
+  // Calculate price whenever form data changes
+  useEffect(() => {
+    if (mounted) {
+      calculatePrice()
+    }
+  }, [formData, pricing, offers, mounted, calculatePrice])
+
+  // NOW WE CAN HAVE EARLY RETURNS AFTER ALL HOOKS ARE CALLED
+
   // Show loading while checking authentication
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
       <div className="text-center py-16">
         <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
@@ -53,6 +370,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
     return (
       <div className="text-center py-16">
         <div className="border border-white/20 p-8 max-w-md mx-auto">
+          <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
           <h2 className="text-2xl font-light tracking-wide mb-6">
             Sign Up Required
           </h2>
@@ -89,163 +407,67 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
     )
   }
 
-  // Pre-fill form data for logged-in users
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        customerName: user.name || '',
-        customerEmail: user.email || '',
-      }))
-    }
-  }, [user])
-
-  // Get unique styles and sizes
-  const styles = [...new Set(pricing.map(p => p.style))]
-  const sizes = formData.style 
-    ? [...new Set(pricing.filter(p => p.style === formData.style).map(p => p.size))]
-    : []
-
-  // Calculate price whenever form data changes
-  useEffect(() => {
-    calculatePrice()
-  }, [formData, pricing, offers])
-
-  const calculatePrice = () => {
-    if (!formData.style || !formData.size || !formData.numberOfFaces) {
-      setPriceCalculation({
-        basePrice: 0,
-        discountAmount: 0,
-        finalPrice: 0,
-        appliedOffer: null,
-      })
-      return
-    }
-
-    // Find base price
-    const priceEntry = pricing.find(p => 
-      p.style === formData.style && 
-      p.size === formData.size && 
-      p.numberOfFaces === formData.numberOfFaces
+  // Show fallback if no pricing data
+  if (!pricing || pricing.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="border border-red-500/20 bg-red-500/10 p-8 max-w-md mx-auto">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-light tracking-wide mb-6">
+            Service Unavailable
+          </h2>
+          <p className="text-gray-400 mb-8 leading-relaxed">
+            We're unable to load pricing information right now. Please try again later or contact us directly.
+          </p>
+          
+          <div className="space-y-4">
+            <a 
+              href="/contact"
+              className="block w-full px-6 py-3 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300"
+            >
+              Contact Us
+            </a>
+            <RefreshButton className="block w-full px-6 py-3 border border-white/30 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300 text-center">
+              Try Again
+            </RefreshButton>
+          </div>
+        </div>
+      </div>
     )
-
-    if (!priceEntry) return
-
-    const basePrice = priceEntry.basePrice
-    const subtotal = basePrice
-
-    // Find applicable offers
-    let bestOffer = null
-    let maxDiscount = 0
-
-    // Check coupon code first
-    if (formData.couponCode) {
-      const couponOffer = offers.find(o => 
-        o.couponCode === formData.couponCode.toUpperCase() &&
-        (o.minOrderValue ? subtotal >= o.minOrderValue : true) &&
-        (o.applicableStyles.length === 0 || o.applicableStyles.includes(formData.style))
-      )
-      
-      if (couponOffer) {
-        const discount = calculateDiscount(subtotal, couponOffer)
-        if (discount > maxDiscount) {
-          maxDiscount = discount
-          bestOffer = couponOffer
-        }
-      }
-    }
-
-    // Check auto-apply offers if no coupon or coupon gives less discount
-    if (!bestOffer || maxDiscount === 0) {
-      for (const offer of offers) {
-        if (offer.couponCode) continue // Skip coupon offers for auto-apply
-        
-        if (offer.minOrderValue && subtotal < offer.minOrderValue) continue
-        if (offer.applicableStyles.length > 0 && !offer.applicableStyles.includes(formData.style)) continue
-        
-        const discount = calculateDiscount(subtotal, offer)
-        if (discount > maxDiscount) {
-          maxDiscount = discount
-          bestOffer = offer
-        }
-      }
-    }
-
-    const finalPrice = Math.max(0, subtotal - maxDiscount)
-
-    setPriceCalculation({
-      basePrice,
-      discountAmount: maxDiscount,
-      finalPrice,
-      appliedOffer: bestOffer,
-    })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    
-    if (files.length === 0) return
-    
-    // Validate file types and sizes
-    const validFiles = files.filter(file => {
-      const isValidType = file.type.startsWith('image/')
-      const isValidSize = file.size <= 10 * 1024 * 1024 // 10MB
-      return isValidType && isValidSize
-    })
-    
-    setImages(prev => [...prev, ...validFiles].slice(0, 5)) // Max 5 images
-  }
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (images.length === 0) {
-      alert('Please upload at least one image')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const formDataToSend = new FormData()
-      
-      // Add form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        formDataToSend.append(key, value.toString())
-      })
-      
-      // Add price calculation
-      formDataToSend.append('basePrice', priceCalculation.basePrice.toString())
-      formDataToSend.append('discountAmount', priceCalculation.discountAmount.toString())
-      formDataToSend.append('finalPrice', priceCalculation.finalPrice.toString())
-      if (priceCalculation.appliedOffer) {
-        formDataToSend.append('offerId', priceCalculation.appliedOffer.id)
-      }
-      
-      // Add images
-      images.forEach((image, index) => {
-        formDataToSend.append(`image-${index}`, image)
-      })
-
-      const result = await createOrder(formDataToSend)
-      
-      if (result.success) {
-        router.push(`/order/success?orderId=${result.orderId}`)
-      } else {
-        alert(result.error || 'Failed to create order')
-      }
-    } catch (error) {
-      console.error('Order submission error:', error)
-      alert('Failed to create order. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Get unique styles and sizes with fallbacks
+  const styles = Array.from(new Set(
+    (pricing || [])
+      .filter(p => p && p.style)
+      .map(p => p.style)
+  ))
+  
+  const sizes = formData.style 
+    ? Array.from(new Set(
+        (pricing || [])
+          .filter(p => p && p.style === formData.style && p.size)
+          .map(p => p.size)
+      ))
+    : []
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Error Summary */}
+      {submitAttempted && Object.keys(errors).length > 0 && (
+        <div className="border border-red-500/20 bg-red-500/10 p-6 rounded-lg">
+          <div className="flex items-center space-x-2 mb-4">
+            <AlertCircle className="w-5 h-5 text-red-400" />
+            <h3 className="text-red-400 font-medium">Please fix the following errors:</h3>
+          </div>
+          <ul className="text-red-400 text-sm space-y-1">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field}>• {error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="border border-white/20 p-8">
         <h2 className="text-2xl font-light tracking-wide text-white mb-6">
           Customer Information
@@ -255,8 +477,9 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
           <Input
             label="Full Name"
             value={formData.customerName}
-            onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+            onChange={(e) => updateFormData('customerName', e.target.value)}
             required
+            error={errors.customerName}
             className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
           
@@ -264,16 +487,18 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             label="Email Address"
             type="email"
             value={formData.customerEmail}
-            onChange={(e) => setFormData(prev => ({ ...prev, customerEmail: e.target.value }))}
+            onChange={(e) => updateFormData('customerEmail', e.target.value)}
             required
+            error={errors.customerEmail}
             className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
           
           <Input
             label="Phone Number"
             value={formData.customerPhone}
-            onChange={(e) => setFormData(prev => ({ ...prev, customerPhone: e.target.value }))}
+            onChange={(e) => updateFormData('customerPhone', e.target.value)}
             required
+            error={errors.customerPhone}
             className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
           />
         </div>
@@ -288,32 +513,34 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
           <Select
             label="Art Style"
             value={formData.style}
-            onChange={(e) => setFormData(prev => ({ ...prev, style: e.target.value, size: '' }))}
+            onChange={(e) => updateFormData('style', e.target.value)}
             options={[
               { value: '', label: 'Select Style' },
               ...styles.map(style => ({ value: style, label: style }))
             ]}
             required
+            error={errors.style}
             className="bg-black border-white/20 text-white focus:border-white/40"
           />
           
           <Select
             label="Size"
             value={formData.size}
-            onChange={(e) => setFormData(prev => ({ ...prev, size: e.target.value }))}
+            onChange={(e) => updateFormData('size', e.target.value)}
             options={[
               { value: '', label: 'Select Size' },
               ...sizes.map(size => ({ value: size, label: size }))
             ]}
             disabled={!formData.style}
             required
+            error={errors.size}
             className="bg-black border-white/20 text-white focus:border-white/40"
           />
           
           <Select
             label="Number of Faces"
             value={formData.numberOfFaces.toString()}
-            onChange={(e) => setFormData(prev => ({ ...prev, numberOfFaces: parseInt(e.target.value) }))}
+            onChange={(e) => updateFormData('numberOfFaces', parseInt(e.target.value) || 1)}
             options={[
               { value: '1', label: '1 Person' },
               { value: '2', label: '2 People' },
@@ -330,7 +557,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
           <Textarea
             label="Special Notes (Optional)"
             value={formData.specialNotes}
-            onChange={(e) => setFormData(prev => ({ ...prev, specialNotes: e.target.value }))}
+            onChange={(e) => updateFormData('specialNotes', e.target.value)}
             placeholder="Any special requests or instructions for the artist..."
             rows={3}
             className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
@@ -363,6 +590,9 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             >
               Choose Files
             </label>
+            {errors.images && (
+              <p className="text-red-400 text-sm mt-2">{errors.images}</p>
+            )}
           </div>
 
           {images.length > 0 && (
@@ -373,14 +603,15 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
                     src={URL.createObjectURL(image)}
                     alt={`Upload ${index + 1}`}
                     className="w-full h-24 object-cover rounded-lg"
+                    onError={(e) => {
+                      console.error('Image preview error:', e)
+                      e.currentTarget.src = '/api/placeholder/100/100'
+                    }}
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
+                  <RemoveButton
+                    onRemove={() => removeImage(index)}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  />
                 </div>
               ))}
             </div>
@@ -401,13 +632,15 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400">Base Price:</span>
-              <span className="font-medium text-white">{formatPrice(priceCalculation.basePrice)}</span>
+              <span className="font-medium text-white">
+                {formatPrice(priceCalculation.basePrice)}
+              </span>
             </div>
             
             {priceCalculation.discountAmount > 0 && (
               <div className="flex justify-between text-green-400">
                 <span>
-                  Discount ({priceCalculation.appliedOffer?.title}):
+                  Discount ({priceCalculation.appliedOffer?.title || 'Applied'}):
                 </span>
                 <span className="font-medium">
                   -{formatPrice(priceCalculation.discountAmount)}
@@ -430,7 +663,7 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
             <Input
               label="Coupon Code (Optional)"
               value={formData.couponCode}
-              onChange={(e) => setFormData(prev => ({ ...prev, couponCode: e.target.value }))}
+              onChange={(e) => updateFormData('couponCode', e.target.value)}
               placeholder="Enter coupon code"
               className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
             />
@@ -442,10 +675,26 @@ export function OrderForm({ pricing, offers }: OrderFormProps) {
         <button
           type="submit"
           disabled={images.length === 0 || priceCalculation.finalPrice === 0 || loading}
-          className="px-12 py-4 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-12 py-4 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto space-x-2"
         >
-          {loading ? 'Processing...' : `Place Order - ${formatPrice(priceCalculation.finalPrice)}`}
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              <span>Place Order - {formatPrice(priceCalculation.finalPrice)}</span>
+            </>
+          )}
         </button>
+        
+        {priceCalculation.finalPrice === 0 && (
+          <p className="text-gray-400 text-sm mt-2">
+            Please select style and size to see pricing
+          </p>
+        )}
       </div>
     </form>
   )

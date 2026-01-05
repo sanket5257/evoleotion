@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Providers } from '@/components/providers'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
+import { ErrorBoundary } from '@/components/error-boundary'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,13 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Providers>
-          <GSAPProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </GSAPProvider>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <GSAPProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </GSAPProvider>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )

@@ -2,6 +2,9 @@ import { SignUpForm } from '@/components/auth/signup-form'
 import { PageTransition } from '@/components/animations/page-transition'
 import Link from 'next/link'
 
+// Force dynamic rendering to prevent SSR issues with auth context
+export const dynamic = 'force-dynamic'
+
 export default function SignUpPage() {
   return (
     <PageTransition>
