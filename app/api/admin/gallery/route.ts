@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { uploadToSupabase } from '@/lib/supabase'
+import { uploadToSupabase } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 
 // Force dynamic rendering to prevent static evaluation during build
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       
       // Try to delete the uploaded image from Supabase if database save fails
       try {
-        const { deleteFromSupabase } = await import('@/lib/supabase')
+        const { deleteFromSupabase } = await import('@/lib/supabase-server')
         await deleteFromSupabase(uploadResult.public_id)
       } catch (cleanupError) {
         console.error('Failed to cleanup Supabase image:', cleanupError)

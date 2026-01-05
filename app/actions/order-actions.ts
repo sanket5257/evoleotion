@@ -2,7 +2,7 @@
 
 import { getSession } from '@/lib/session'
 import { supabaseServer } from '@/lib/supabase-server'
-import { uploadToSupabase } from '@/lib/supabase'
+import { uploadToSupabase } from '@/lib/supabase-server'
 import { generateOrderNumber, generateWhatsAppUrl } from '@/lib/utils'
 import { orderSchema } from '@/lib/validations'
 

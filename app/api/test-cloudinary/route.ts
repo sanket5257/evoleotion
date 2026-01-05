@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin, uploadToSupabase, deleteFromSupabase, listFilesInFolder } from '@/lib/supabase'
+import { supabaseAdmin, uploadToSupabase, deleteFromSupabase, listFilesInFolder } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'

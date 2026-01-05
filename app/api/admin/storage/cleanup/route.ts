@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminFromRequest } from '@/lib/admin-auth'
-import { cleanupOrphanedFiles } from '@/lib/supabase'
+import { cleanupOrphanedFiles } from '@/lib/supabase-server'
 import { supabaseServer } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
