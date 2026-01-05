@@ -41,67 +41,142 @@ export async function POST(request: NextRequest) {
     const tags = formData.get('tags') as string
     const isActive = formData.get('isActive') === 'true'
 
-    if (!file || !title || !style) {
+    // Enhanced validation
+    if (!file || !title?.trim() || !style?.trim()) {
       return NextResponse.json({ 
         error: 'Missing required fields',
-        details: { hasFile: !!file, title: !!title, style: !!style }
+        details: { 
+          hasFile: !!file, 
+          hasTitle: !!title?.trim(), 
+          hasStyle: !!style?.trim(),
+          fileType: file?.type || 'none',
+          fileSize: file?.size || 0
+        }
+      }, { status: 400 })
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/bmp',
+      'image/tiff'
+    ]
+    
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      return NextResponse.json({ 
+        error: 'Unsupported file format',
+        details: `Received: ${file.type}. Supported: JPEG, PNG, WebP, GIF, BMP, TIFF`
+      }, { status: 400 })
+    }
+
+    // Validate file size
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ 
+        error: 'File too large',
+        details: `File size: ${(file.size / 1024 / 1024).toFixed(2)}MB. Maximum: 10MB`
       }, { status: 400 })
     }
 
     // Check Cloudinary config
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      return NextResponse.json({ error: 'Cloudinary configuration missing' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Cloudinary configuration missing',
+        details: 'Please configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET'
+      }, { status: 500 })
     }
 
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    let uploadResult
+    try {
+      // Convert file to buffer
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
 
-    // Configure and use Cloudinary
-    const cloudinary = configureCloudinary()
-    
-    // Upload to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'image',
-          folder: 'gallery',
-          transformation: [
-            { width: 800, height: 1000, crop: 'fill', quality: 'auto' }
-          ]
-        },
-        (error, result) => {
-          if (error) {
-            console.error('Cloudinary upload error:', error)
-            reject(error)
-          } else {
-            resolve(result)
+      // Configure and use Cloudinary
+      const cloudinary = configureCloudinary()
+      
+      // Upload to Cloudinary with enhanced options
+      uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'gallery',
+            format: 'auto',
+            quality: 'auto:good',
+            fetch_format: 'auto',
+            transformation: [
+              { width: 1200, height: 1500, crop: 'limit', quality: 'auto:good' }
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error)
+              reject(new Error(`Cloudinary upload failed: ${error.message}`))
+            } else if (!result) {
+              reject(new Error('Cloudinary upload failed: No result returned'))
+            } else {
+              resolve(result)
+            }
           }
+        )
+        
+        uploadStream.end(buffer)
+      }) as any
+
+    } catch (uploadError) {
+      console.error('Upload error:', uploadError)
+      return NextResponse.json({ 
+        error: 'Image upload failed',
+        details: uploadError instanceof Error ? uploadError.message : 'Unknown upload error'
+      }, { status: 500 })
+    }
+
+    try {
+      // Get the highest order number and increment
+      const lastImage = await prisma.galleryImage.findFirst({
+        orderBy: { order: 'desc' }
+      })
+      const nextOrder = (lastImage?.order || 0) + 1
+
+      // Save to database
+      const image = await prisma.galleryImage.create({
+        data: {
+          title: title.trim(),
+          description: description?.trim() || null,
+          imageUrl: uploadResult.secure_url,
+          publicId: uploadResult.public_id,
+          style: style.trim(),
+          tags: tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
+          isActive,
+          order: nextOrder
         }
-      ).end(buffer)
-    }) as any
+      })
 
-    // Get the highest order number and increment
-    const lastImage = await prisma.galleryImage.findFirst({
-      orderBy: { order: 'desc' }
-    })
-    const nextOrder = (lastImage?.order || 0) + 1
-
-    // Save to database
-    const image = await prisma.galleryImage.create({
-      data: {
-        title,
-        description: description || null,
-        imageUrl: uploadResult.secure_url,
-        publicId: uploadResult.public_id,
-        style,
-        tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-        isActive,
-        order: nextOrder
+      return NextResponse.json({
+        success: true,
+        image,
+        message: 'Image uploaded successfully'
+      })
+    } catch (dbError) {
+      console.error('Database error:', dbError)
+      
+      // Try to delete the uploaded image from Cloudinary if database save fails
+      try {
+        const cloudinary = configureCloudinary()
+        await cloudinary.uploader.destroy(uploadResult.public_id)
+      } catch (cleanupError) {
+        console.error('Failed to cleanup Cloudinary image:', cleanupError)
       }
-    })
+      
+      return NextResponse.json({ 
+        error: 'Database save failed',
+        details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+      }, { status: 500 })
+    }
 
-    return NextResponse.json(image)
   } catch (error) {
     console.error('Error creating gallery image:', error)
     return NextResponse.json({ 

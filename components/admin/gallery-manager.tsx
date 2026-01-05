@@ -32,6 +32,7 @@ export function GalleryManager({ images }: GalleryManagerProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -61,6 +62,8 @@ export function GalleryManager({ images }: GalleryManagerProps) {
           const errorData = await response.json()
           throw new Error(errorData.error || 'Failed to update image')
         }
+        
+        alert('Image updated successfully!')
       } else {
         // Create new image
         if (!selectedFile) {
@@ -81,13 +84,14 @@ export function GalleryManager({ images }: GalleryManagerProps) {
           body: formDataToSend
         })
         
+        const result = await response.json()
+        
         if (!response.ok) {
-          const errorData = await response.json()
-          console.error('Upload error:', errorData)
-          throw new Error(errorData.error || 'Failed to create image')
+          console.error('Upload error:', result)
+          throw new Error(result.error || 'Failed to upload image')
         }
 
-        const result = await response.json()
+        alert('Image uploaded successfully!')
       }
       
       // Refresh the page to show updated data
@@ -97,7 +101,24 @@ export function GalleryManager({ images }: GalleryManagerProps) {
       router.refresh()
     } catch (error) {
       console.error('Error saving image:', error)
-      alert(`Failed to save image: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      
+      let errorMessage = 'Failed to save image'
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      // Show more user-friendly error messages
+      if (errorMessage.includes('Cloudinary')) {
+        errorMessage = 'Image upload service error. Please try again or contact support.'
+      } else if (errorMessage.includes('Unsupported file format')) {
+        errorMessage = 'Please use a supported image format (JPEG, PNG, WebP, GIF, BMP, TIFF)'
+      } else if (errorMessage.includes('File too large')) {
+        errorMessage = 'Image file is too large. Please use an image smaller than 10MB.'
+      } else if (errorMessage.includes('configuration missing')) {
+        errorMessage = 'Image upload is not configured. Please contact the administrator.'
+      }
+      
+      alert(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -112,6 +133,7 @@ export function GalleryManager({ images }: GalleryManagerProps) {
       isActive: true,
     })
     setSelectedFile(null)
+    setImagePreview(null)
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -128,9 +150,19 @@ export function GalleryManager({ images }: GalleryManagerProps) {
     const file = e.target.files?.[0]
     
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
+      // Enhanced file type validation
+      const allowedTypes = [
+        'image/jpeg',
+        'image/jpg', 
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'image/bmp',
+        'image/tiff'
+      ]
+      
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        alert('Please select a supported image format (JPEG, PNG, WebP, GIF, BMP, TIFF)')
         e.target.value = ''
         return
       }
@@ -143,6 +175,13 @@ export function GalleryManager({ images }: GalleryManagerProps) {
       }
       
       setSelectedFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -262,29 +301,56 @@ export function GalleryManager({ images }: GalleryManagerProps) {
             />
 
             {!editingImage && (
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Upload image file (max 10MB)
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleFileButtonClick}
-                >
-                  Choose File
-                </Button>
-                {selectedFile && (
-                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                    Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Upload image file (max 10MB)
                   </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/bmp,image/tiff"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleFileButtonClick}
+                  >
+                    Choose File
+                  </Button>
+                  {selectedFile && (
+                    <div className="mt-4">
+                      <p className="text-sm text-green-600 dark:text-green-400 mb-2">
+                        Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Type: {selectedFile.type}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Image Preview:
+                    </h5>
+                    <div className="relative w-full max-w-sm mx-auto">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-auto rounded-lg shadow-sm"
+                        style={{ maxHeight: '300px', objectFit: 'contain' }}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -340,7 +406,9 @@ export function GalleryManager({ images }: GalleryManagerProps) {
                 fill
                 className="object-cover"
                 onError={(e) => {
-                  // Image failed to load
+                  // Image failed to load - show placeholder
+                  const target = e.target as HTMLImageElement
+                  target.src = '/api/placeholder/400/500?text=Image+Not+Found'
                 }}
                 onLoad={() => {
                   // Image loaded successfully

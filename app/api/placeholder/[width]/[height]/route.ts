@@ -1,58 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
+interface RouteParams {
+  params: { width: string; height: string }
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { width: string; height: string } }
+  { params }: RouteParams
 ) {
   try {
     const { width, height } = params
     const { searchParams } = new URL(request.url)
-    const name = searchParams.get('name') || 'Image'
-    
-    // Validate dimensions
-    const w = Math.min(Math.max(parseInt(width) || 400, 50), 2000)
-    const h = Math.min(Math.max(parseInt(height) || 500, 50), 2000)
-    
+    const text = searchParams.get('text') || 'No Image'
+    const bgColor = searchParams.get('bg') || 'f0f0f0'
+    const textColor = searchParams.get('color') || '666666'
+
     // Create SVG placeholder
     const svg = `
-      <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#1a1a1a"/>
-        <rect x="10%" y="10%" width="80%" height="80%" fill="#2a2a2a" stroke="#404040" stroke-width="2"/>
-        <text x="50%" y="45%" font-family="Arial, sans-serif" font-size="16" fill="#666" text-anchor="middle">
-          📷 Image Placeholder
-        </text>
-        <text x="50%" y="60%" font-family="Arial, sans-serif" font-size="12" fill="#555" text-anchor="middle">
-          ${name.substring(0, 30)}${name.length > 30 ? '...' : ''}
-        </text>
-        <text x="50%" y="75%" font-family="Arial, sans-serif" font-size="10" fill="#444" text-anchor="middle">
-          ${w} × ${h}
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#${bgColor}"/>
+        <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#${textColor}" text-anchor="middle" dy=".3em">
+          ${text}
         </text>
       </svg>
     `
-    
+
     return new NextResponse(svg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=31536000',
       },
     })
   } catch (error) {
     console.error('Placeholder generation error:', error)
     
-    // Fallback minimal SVG
+    // Return a simple fallback SVG
     const fallbackSvg = `
-      <svg width="400" height="500" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#1a1a1a"/>
-        <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#666" text-anchor="middle">
-          Image Unavailable
+      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#f0f0f0"/>
+        <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#666666" text-anchor="middle" dy=".3em">
+          Image Error
         </text>
       </svg>
     `
-    
+
     return new NextResponse(fallbackSvg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'public, max-age=31536000',
       },
     })
   }
