@@ -11,18 +11,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
     db: {
       url: process.env.DATABASE_URL
     }
-  },
-  // Configure connection pool for serverless
-  __internal: {
-    engine: {
-      // Reduce connection timeout for faster failures
-      connectTimeout: 10000,
-      // Pool configuration for serverless
-      pool: {
-        timeout: 10000,
-        idleTimeout: 30000,
-      }
-    }
   }
 })
 
