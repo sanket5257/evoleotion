@@ -101,6 +101,7 @@ export function SignUpForm() {
           router.push('/auth/signin')
         }, 2000)
       } else {
+        // Successful signup and signin, redirect to dashboard
         router.push('/dashboard')
       }
     } catch (error: any) {

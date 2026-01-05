@@ -15,8 +15,8 @@ interface Pricing {
   numberOfFaces: number
   basePrice: number
   isActive: boolean
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 interface PricingManagerProps {

@@ -23,7 +23,7 @@ interface FormErrors {
 
 export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, refreshSession } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -337,6 +337,11 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   useEffect(() => {
     setMounted(true)
     
+    // Refresh session to ensure we have latest user data
+    if (refreshSession) {
+      refreshSession().catch(console.error)
+    }
+    
     // Check for pre-selected style from URL parameters
     const urlParams = new URLSearchParams(window.location.search)
     const preSelectedStyle = urlParams.get('style')
@@ -353,7 +358,7 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
         abortControllerRef.current.abort()
       }
     }
-  }, [])
+  }, [refreshSession])
 
   // Pre-fill form data for logged-in users
   useEffect(() => {

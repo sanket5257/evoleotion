@@ -22,11 +22,7 @@ export async function GET() {
       return NextResponse.json({
         success: false,
         error: 'Supabase connection failed',
-        details: {
-          code: (testError as any).code || 'unknown',
-          message: (testError as any).message || 'Unknown error',
-          hint: (testError as any).hint || null
-        },
+        details: testError,
         queryTime,
         timestamp: new Date().toISOString()
       }, { status: 500 })
@@ -44,28 +40,22 @@ export async function GET() {
       .select('id')
       .limit(1)
 
-    // Helper function to safely get error message
-    const getErrorMessage = (error: any) => {
-      if (!error) return null
-      return error.message || String(error) || 'Unknown error'
-    }
-
     return NextResponse.json({
       success: true,
       tests: {
         userTable: {
           success: !testError,
-          error: getErrorMessage(testError),
+          error: testError ? String(testError) : null,
           hasData: !!testData && testData.length > 0
         },
         pricingTable: {
           success: !pricingError,
-          error: getErrorMessage(pricingError),
+          error: pricingError ? String(pricingError) : null,
           hasData: !!pricingData && pricingData.length > 0
         },
         offersTable: {
           success: !offersError,
-          error: getErrorMessage(offersError),
+          error: offersError ? String(offersError) : null,
           hasData: !!offersData && offersData.length > 0
         }
       },

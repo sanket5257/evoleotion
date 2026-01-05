@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { OrdersManager } from '@/components/admin/orders-manager'
 
 // Force dynamic rendering - prevents static generation at build time
@@ -7,14 +7,22 @@ export const revalidate = 0
 
 async function getOrders() {
   try {
-    return await prisma.order.findMany({
-      include: {
-        user: { select: { name: true, email: true } },
-        offer: { select: { title: true } },
-        images: true,
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const { data: orders, error } = await supabaseServer
+      .from('orders')
+      .select(`
+        *,
+        user:users(name, email),
+        offer:offers(title),
+        images:order_images(*)
+      `)
+      .order('createdAt', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching orders:', error)
+      return []
+    }
+    
+    return orders || []
   } catch (error) {
     console.error('Error fetching orders:', error)
     return []

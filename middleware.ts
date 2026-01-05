@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSessionFromRequest } from '@/lib/session'
+import { getSessionFromRequest, updateSupabaseResponse } from '@/lib/session'
 
 export async function middleware(request: NextRequest) {
+  let response = NextResponse.next()
+
   // Check if the request is for admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const session = await getSessionFromRequest(request)
@@ -13,7 +15,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  // Update response with Supabase cookies
+  response = await updateSupabaseResponse(request, response)
+  
+  return response
 }
 
 export const config = {

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { OffersManager } from '@/components/admin/offers-manager'
 
 // Force dynamic rendering - prevents static generation at build time
@@ -7,9 +7,17 @@ export const revalidate = 0
 
 async function getOffers() {
   try {
-    return await prisma.offer.findMany({
-      orderBy: { priority: 'desc' }
-    })
+    const { data: offers, error } = await supabaseServer
+      .from('offers')
+      .select('*')
+      .order('priority', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching offers:', error)
+      return []
+    }
+    
+    return offers || []
   } catch (error) {
     console.error('Error fetching offers:', error)
     return []

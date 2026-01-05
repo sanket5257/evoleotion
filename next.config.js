@@ -4,6 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'wcytdeycgdulgnxkdjgh.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      // Keep Cloudinary for backward compatibility during migration
+      {
+        protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
     ],

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,11 +11,17 @@ export async function GET() {
 
   // Test 1: Basic connection
   try {
-    const result = await prisma.$queryRaw`SELECT 1 as test`
+    const { data, error } = await supabaseServer
+      .from('users')
+      .select('id')
+      .limit(1)
+    
+    if (error) throw error
+    
     results.tests.push({
       name: 'Basic Connection',
       status: 'success',
-      result
+      result: 'Connected successfully'
     })
   } catch (error) {
     results.tests.push({
@@ -27,11 +33,16 @@ export async function GET() {
 
   // Test 2: User table access
   try {
-    const userCount = await prisma.user.count()
+    const { count, error } = await supabaseServer
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+    
+    if (error) throw error
+    
     results.tests.push({
       name: 'User Table Access',
       status: 'success',
-      userCount
+      userCount: count || 0
     })
   } catch (error) {
     results.tests.push({
@@ -41,32 +52,43 @@ export async function GET() {
     })
   }
 
-  // Test 3: Database info
+  // Test 3: Gallery table access
   try {
-    const dbInfo = await prisma.$queryRaw`SELECT version() as version, current_database() as database`
+    const { count, error } = await supabaseServer
+      .from('gallery_images')
+      .select('*', { count: 'exact', head: true })
+    
+    if (error) throw error
+    
     results.tests.push({
-      name: 'Database Info',
+      name: 'Gallery Table Access',
       status: 'success',
-      info: dbInfo
+      imageCount: count || 0
     })
   } catch (error) {
     results.tests.push({
-      name: 'Database Info',
+      name: 'Gallery Table Access',
       status: 'failed',
       error: error instanceof Error ? error.message : 'Unknown error'
     })
   }
 
-  // Test 4: Connection status
+  // Test 4: Orders table access
   try {
-    await prisma.$connect()
+    const { count, error } = await supabaseServer
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+    
+    if (error) throw error
+    
     results.tests.push({
-      name: 'Explicit Connect',
-      status: 'success'
+      name: 'Orders Table Access',
+      status: 'success',
+      orderCount: count || 0
     })
   } catch (error) {
     results.tests.push({
-      name: 'Explicit Connect',
+      name: 'Orders Table Access',
       status: 'failed',
       error: error instanceof Error ? error.message : 'Unknown error'
     })

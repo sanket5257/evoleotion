@@ -1,14 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
+import { Database } from '@/types/supabase'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Client-side Supabase client for authenticated operations
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
 // Server-side Supabase client with service role key for admin operations
-export const supabaseAdmin = createClient(
+export const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
 )
 
 // Upload image to Supabase Storage
@@ -102,15 +116,110 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
   height?: number
   quality?: number
 }) => {
-  const { data } = supabaseAdmin.storage
-    .from('images')
-    .getPublicUrl(filePath, {
-      transform: {
-        width: options?.width || 800,
-        height: options?.height || 600,
-        quality: options?.quality || 80
-      }
-    })
+  try {
+    const { data } = supabaseAdmin.storage
+      .from('images')
+      .getPublicUrl(filePath, {
+        transform: {
+          width: options?.width || 800,
+          height: options?.height || 600,
+          quality: options?.quality || 80
+        }
+      })
 
-  return data.publicUrl
+    return data.publicUrl
+  } catch (error) {
+    console.error('Error getting optimized image URL:', error)
+    // Return the basic public URL as fallback
+    const { data } = supabaseAdmin.storage
+      .from('images')
+      .getPublicUrl(filePath)
+    
+    return data.publicUrl
+  }
+}
+
+// List all files in a folder
+export const listFilesInFolder = async (folder: string) => {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from('images')
+      .list(folder, {
+        limit: 100,
+        offset: 0
+      })
+
+    if (error) {
+      console.error('Error listing files:', error)
+      throw new Error(`Failed to list files: ${error.message}`)
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('List files error:', error)
+    throw error
+  }
+}
+
+// Get file metadata
+export const getFileMetadata = async (filePath: string) => {
+  try {
+    const { data } = supabaseAdmin.storage
+      .from('images')
+      .getPublicUrl(filePath)
+
+    return data
+  } catch (error) {
+    console.error('Get file metadata error:', error)
+    throw error
+  }
+}
+
+// Cleanup orphaned files (files not referenced in database)
+export const cleanupOrphanedFiles = async (referencedPaths: string[]) => {
+  try {
+    // Get all files in the images bucket
+    const { data: allFiles, error } = await supabaseAdmin.storage
+      .from('images')
+      .list('', {
+        limit: 1000,
+        offset: 0
+      })
+
+    if (error) {
+      throw new Error(`Failed to list files: ${error.message}`)
+    }
+
+    // Find files that are not referenced
+    const orphanedFiles = allFiles?.filter(file => 
+      !referencedPaths.some(path => path.includes(file.name))
+    ) || []
+
+    // Delete orphaned files
+    if (orphanedFiles.length > 0) {
+      const filesToDelete = orphanedFiles.map(file => file.name)
+      const { error: deleteError } = await supabaseAdmin.storage
+        .from('images')
+        .remove(filesToDelete)
+
+      if (deleteError) {
+        throw new Error(`Failed to delete orphaned files: ${deleteError.message}`)
+      }
+
+      return {
+        success: true,
+        deletedCount: filesToDelete.length,
+        deletedFiles: filesToDelete
+      }
+    }
+
+    return {
+      success: true,
+      deletedCount: 0,
+      deletedFiles: []
+    }
+  } catch (error) {
+    console.error('Cleanup orphaned files error:', error)
+    throw error
+  }
 }

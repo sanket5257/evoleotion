@@ -15,12 +15,13 @@ interface GalleryImage {
   title: string
   description?: string | null
   imageUrl: string
+  publicId: string
   style: string
   tags: string[]
   isActive: boolean
-  order: number
-  createdAt: string // Changed from Date to string
-  updatedAt: string // Changed from Date to string
+  orderIndex: number
+  createdAt: string
+  updatedAt: string
 }
 
 interface GalleryManagerProps {
@@ -108,7 +109,7 @@ export function GalleryManager({ images }: GalleryManagerProps) {
       }
       
       // Show more user-friendly error messages
-      if (errorMessage.includes('Cloudinary')) {
+      if (errorMessage.includes('Supabase') || errorMessage.includes('Storage')) {
         errorMessage = 'Image upload service error. Please try again or contact support.'
       } else if (errorMessage.includes('Unsupported file format')) {
         errorMessage = 'Please use a supported image format (JPEG, PNG, WebP, GIF, BMP, TIFF)'

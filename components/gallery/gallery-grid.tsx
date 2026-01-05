@@ -33,7 +33,9 @@ export function GalleryGrid({ images }: GalleryGridProps) {
     const checkAuthAndLoadFavorites = async () => {
       try {
         // Check if user is logged in by trying to fetch favorites
-        const response = await fetch('/api/favorites')
+        const response = await fetch('/api/favorites', {
+          cache: 'no-store'
+        })
         if (response.ok) {
           setIsLoggedIn(true)
           const favoritesData = await response.json()
@@ -43,7 +45,11 @@ export function GalleryGrid({ images }: GalleryGridProps) {
           // Load from localStorage as fallback for non-logged users
           const saved = localStorage.getItem('favorites')
           if (saved) {
-            setFavorites(new Set(JSON.parse(saved)))
+            try {
+              setFavorites(new Set(JSON.parse(saved)))
+            } catch (e) {
+              console.error('Error parsing localStorage favorites:', e)
+            }
           }
         }
       } catch (error) {
@@ -52,7 +58,11 @@ export function GalleryGrid({ images }: GalleryGridProps) {
         // Load from localStorage as fallback
         const saved = localStorage.getItem('favorites')
         if (saved) {
-          setFavorites(new Set(JSON.parse(saved)))
+          try {
+            setFavorites(new Set(JSON.parse(saved)))
+          } catch (e) {
+            console.error('Error parsing localStorage favorites:', e)
+          }
         }
       }
     }

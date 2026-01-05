@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { configureCloudinary } from '@/lib/cloudinary'
+import { supabaseAdmin, uploadToSupabase, deleteFromSupabase, listFilesInFolder } from '@/lib/supabase'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -12,36 +12,52 @@ export async function GET() {
   }
 
   try {
-    // Configure Cloudinary dynamically
-    const cloudinary = configureCloudinary()
-    
-    // Test Cloudinary configuration
+    // Test Supabase Storage configuration
     const config = {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: !!process.env.CLOUDINARY_API_SECRET, // Don't expose the secret
+      supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      has_service_role_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      has_anon_key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     }
 
-    // Try to get account details (this will fail if config is wrong)
-    const result = await cloudinary.api.ping()
+    // Test storage bucket access
+    const { data: buckets, error: bucketsError } = await supabaseAdmin.storage.listBuckets()
+    
+    if (bucketsError) {
+      throw new Error(`Failed to list buckets: ${bucketsError.message}`)
+    }
+
+    // Check if images bucket exists
+    const imagesBucket = buckets?.find(bucket => bucket.name === 'images')
+    
+    if (!imagesBucket) {
+      throw new Error('Images bucket not found')
+    }
+
+    // Test listing files in a folder
+    const testFiles = await listFilesInFolder('gallery')
 
     return NextResponse.json({
       success: true,
       config,
-      cloudinary_status: result,
-      message: 'Cloudinary is configured correctly'
+      storage_status: {
+        buckets_accessible: true,
+        images_bucket_exists: true,
+        images_bucket_public: imagesBucket.public,
+        test_files_count: testFiles.length
+      },
+      message: 'Supabase Storage is configured correctly'
     })
   } catch (error) {
-    console.error('Cloudinary test error:', error)
+    console.error('Supabase Storage test error:', error)
     return NextResponse.json({
       success: false,
       config: {
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: !!process.env.CLOUDINARY_API_SECRET,
+        supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        has_service_role_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        has_anon_key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       },
       error: error instanceof Error ? error.message : 'Unknown error',
-      message: 'Cloudinary configuration failed'
+      message: 'Supabase Storage configuration failed'
     }, { status: 500 })
   }
 }

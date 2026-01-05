@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { ProfileManager } from '@/components/dashboard/profile-manager'
 import { PageTransition } from '@/components/animations/page-transition'
@@ -17,27 +17,35 @@ async function getUserProfile() {
       redirect('/auth/signin')
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        _count: {
-          select: {
-            orders: true
-          }
-        }
-      }
-    })
+    const { data: user, error } = await supabaseServer
+      .from('users')
+      .select(`
+        id,
+        name,
+        email,
+        role,
+        createdAt
+      `)
+      .eq('id', session.userId)
+      .single()
 
-    if (!user) {
+    if (error || !user) {
+      console.error('Error fetching user profile:', error)
       redirect('/auth/signin')
     }
 
-    return user
+    // Get order count for this user
+    const { count: orderCount } = await supabaseServer
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('userId', session.userId)
+
+    return {
+      ...user,
+      _count: {
+        orders: orderCount || 0
+      }
+    }
   } catch (error) {
     console.error('Error fetching user profile:', error)
     redirect('/auth/signin')

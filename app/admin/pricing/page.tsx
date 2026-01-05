@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { PricingManager } from '@/components/admin/pricing-manager'
 
 // Force dynamic rendering - prevents static generation at build time
@@ -7,13 +7,19 @@ export const revalidate = 0
 
 async function getPricingData() {
   try {
-    return await prisma.pricing.findMany({
-      orderBy: [
-        { style: 'asc' },
-        { numberOfFaces: 'asc' },
-        { size: 'asc' }
-      ]
-    })
+    const { data: pricing, error } = await supabaseServer
+      .from('pricing')
+      .select('*')
+      .order('style', { ascending: true })
+      .order('numberOfFaces', { ascending: true })
+      .order('size', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching pricing data:', error)
+      return []
+    }
+    
+    return pricing || []
   } catch (error) {
     console.error('Error fetching pricing data:', error)
     return []

@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`
+    // Test database connection by querying a simple table
+    const { data, error } = await supabaseServer
+      .from('users')
+      .select('id')
+      .limit(1)
+    
+    if (error) {
+      throw error
+    }
     
     return NextResponse.json({ 
       status: 'healthy',

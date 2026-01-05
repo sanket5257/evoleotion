@@ -30,18 +30,42 @@ export function FavoritesManager({ galleryImages }: FavoritesManagerProps) {
   useEffect(() => {
     const loadFavorites = async () => {
       try {
-        const response = await fetch('/api/favorites')
+        const response = await fetch('/api/favorites', {
+          cache: 'no-store'
+        })
         if (response.ok) {
           const favoritesData = await response.json()
           setUserFavorites(favoritesData)
           setFavorites(new Set(favoritesData.map((img: GalleryImage) => img.id)))
+        } else if (response.status === 401) {
+          // User not authenticated, use localStorage fallback
+          const saved = localStorage.getItem('favorites')
+          if (saved) {
+            try {
+              const favoriteIds = JSON.parse(saved)
+              setFavorites(new Set(favoriteIds))
+              // Filter gallery images to show only favorited ones
+              const favoriteImages = galleryImages.filter(img => favoriteIds.includes(img.id))
+              setUserFavorites(favoriteImages)
+            } catch (e) {
+              console.error('Error parsing localStorage favorites:', e)
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading favorites:', error)
         // Fallback to localStorage
         const saved = localStorage.getItem('favorites')
         if (saved) {
-          setFavorites(new Set(JSON.parse(saved)))
+          try {
+            const favoriteIds = JSON.parse(saved)
+            setFavorites(new Set(favoriteIds))
+            // Filter gallery images to show only favorited ones
+            const favoriteImages = galleryImages.filter(img => favoriteIds.includes(img.id))
+            setUserFavorites(favoriteImages)
+          } catch (e) {
+            console.error('Error parsing localStorage favorites:', e)
+          }
         }
       } finally {
         setLoading(false)
@@ -49,7 +73,7 @@ export function FavoritesManager({ galleryImages }: FavoritesManagerProps) {
     }
 
     loadFavorites()
-  }, [])
+  }, [galleryImages])
 
   // Get unique styles for filtering
   const styles = Array.from(new Set(userFavorites.map(img => img.style)))

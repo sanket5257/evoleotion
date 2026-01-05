@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { DashboardStats } from '@/components/admin/dashboard-stats'
 import { RecentOrders } from '@/components/admin/recent-orders'
 import { RevenueChart } from '@/components/admin/revenue-chart'
@@ -9,35 +9,47 @@ export const revalidate = 0
 
 async function getDashboardData() {
   try {
-    const [
-      totalOrders,
-      pendingOrders,
-      totalRevenue,
-      activeOffers,
-      recentOrders
-    ] = await Promise.all([
-      prisma.order.count(),
-      prisma.order.count({ where: { status: 'PENDING' } }),
-      prisma.order.aggregate({
-        _sum: { finalPrice: true },
-        where: { paymentStatus: 'PAID' }
-      }),
-      prisma.offer.count({ where: { isActive: true } }),
-      prisma.order.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { name: true, email: true } }
-        }
-      })
-    ])
+    // Get total orders count
+    const { count: totalOrders } = await supabaseServer
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+
+    // Get pending orders count
+    const { count: pendingOrders } = await supabaseServer
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'PENDING')
+
+    // Get total revenue from paid orders
+    const { data: revenueData } = await supabaseServer
+      .from('orders')
+      .select('finalPrice')
+      .eq('paymentStatus', 'PAID')
+
+    const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.finalPrice || 0), 0) || 0
+
+    // Get active offers count
+    const { count: activeOffers } = await supabaseServer
+      .from('offers')
+      .select('*', { count: 'exact', head: true })
+      .eq('isActive', true)
+
+    // Get recent orders
+    const { data: recentOrders } = await supabaseServer
+      .from('orders')
+      .select(`
+        *,
+        user:users(name, email)
+      `)
+      .order('createdAt', { ascending: false })
+      .limit(5)
 
     return {
-      totalOrders,
-      pendingOrders,
-      totalRevenue: totalRevenue._sum.finalPrice || 0,
-      activeOffers,
-      recentOrders
+      totalOrders: totalOrders || 0,
+      pendingOrders: pendingOrders || 0,
+      totalRevenue,
+      activeOffers: activeOffers || 0,
+      recentOrders: recentOrders || []
     }
   } catch (error) {
     console.error('Error fetching dashboard data:', error)

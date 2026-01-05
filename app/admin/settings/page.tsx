@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { SettingsManager } from '@/components/admin/settings-manager'
 
 // Force dynamic rendering - prevents static generation at build time
@@ -7,7 +7,17 @@ export const revalidate = 0
 
 async function getSettings() {
   try {
-    const settings = await prisma.adminSettings.findFirst()
+    const { data: settings, error } = await supabaseServer
+      .from('admin_settings')
+      .select('*')
+      .limit(1)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      console.error('Error fetching settings:', error)
+      return null
+    }
+    
     return settings
   } catch (error) {
     console.error('Error fetching settings:', error)

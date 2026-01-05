@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -12,20 +12,24 @@ export async function POST(request: NextRequest) {
     await requireAdmin()
 
     // Delete all gallery images with placeholder URLs
-    const deletedImages = await prisma.galleryImage.deleteMany({
-      where: {
-        OR: [
-          { imageUrl: { contains: 'placeholder' } },
-          { imageUrl: { contains: 'via.placeholder.com' } },
-          { publicId: { startsWith: 'sample_' } }
-        ]
-      }
-    })
+    const { data: deletedImages, error } = await supabaseServer
+      .from('gallery_images')
+      .delete()
+      .or('imageUrl.ilike.%placeholder%,imageUrl.ilike.%via.placeholder.com%,publicId.ilike.sample_%')
+      .select()
+
+    if (error) {
+      console.error('Error deleting placeholder images:', error)
+      return NextResponse.json({ 
+        error: 'Failed to cleanup gallery',
+        details: error.message
+      }, { status: 500 })
+    }
 
     return NextResponse.json({ 
       success: true, 
-      deletedCount: deletedImages.count,
-      message: `Deleted ${deletedImages.count} placeholder images`
+      deletedCount: deletedImages?.length || 0,
+      message: `Deleted ${deletedImages?.length || 0} placeholder images`
     })
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {

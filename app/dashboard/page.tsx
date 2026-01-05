@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { PageTransition } from '@/components/animations/page-transition'
 import { UserOrders } from '@/components/dashboard/user-orders'
 import { Navbar } from '@/components/layout/navbar'
@@ -11,18 +11,22 @@ export const revalidate = 0
 
 async function getUserOrders(userId: string) {
   try {
-    return await prisma.order.findMany({
-      where: { userId },
-      include: {
-        offer: {
-          select: { title: true }
-        },
-        images: {
-          select: { id: true, imageUrl: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const { data: orders, error } = await supabaseServer
+      .from('orders')
+      .select(`
+        *,
+        offer:offers(title),
+        images:order_images(id, imageUrl)
+      `)
+      .eq('userId', userId)
+      .order('createdAt', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching user orders:', error)
+      return []
+    }
+
+    return orders || []
   } catch (error) {
     console.error('Error fetching user orders:', error)
     return []

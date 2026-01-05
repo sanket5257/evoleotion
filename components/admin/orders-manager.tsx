@@ -25,7 +25,7 @@ interface Order {
   specialNotes?: string | null
   adminNotes?: string | null
   previewUrl?: string | null
-  createdAt: Date
+  createdAt: string
   user?: { name: string | null; email: string } | null
   offer?: { title: string } | null
   images: { id: string; imageUrl: string }[]

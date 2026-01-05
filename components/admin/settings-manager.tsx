@@ -245,7 +245,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
                   <span className="text-green-600 dark:text-green-400 text-sm font-medium">✓ Connected</span>
                 </div>
                 <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                  <span className="text-sm">Cloudinary Storage</span>
+                  <span className="text-sm">Supabase Storage</span>
                   <span className="text-green-600 dark:text-green-400 text-sm font-medium">✓ Active</span>
                 </div>
                 <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">

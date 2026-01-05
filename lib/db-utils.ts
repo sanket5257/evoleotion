@@ -1,4 +1,4 @@
-import { prisma } from './prisma'
+import { supabaseServer } from './supabase-server'
 
 // Database connection utility with retry logic
 export async function withRetry<T>(
@@ -16,9 +16,10 @@ export async function withRetry<T>(
       
       // Don't retry on validation errors or user errors
       if (error instanceof Error) {
-        if (error.message.includes('Unique constraint') || 
+        if (error.message.includes('duplicate key') || 
             error.message.includes('Invalid') ||
-            error.message.includes('required')) {
+            error.message.includes('required') ||
+            error.message.includes('violates')) {
           throw error
         }
       }
@@ -40,7 +41,15 @@ export async function withRetry<T>(
 // Test database connection
 export async function testConnection(): Promise<boolean> {
   try {
-    await prisma.$queryRaw`SELECT 1`
+    const { data, error } = await supabaseServer
+      .from('users')
+      .select('id')
+      .limit(1)
+    
+    if (error) {
+      throw error
+    }
+    
     return true
   } catch (error) {
     console.error('Database connection test failed:', error)

@@ -20,7 +20,7 @@ interface Order {
   paymentStatus: string
   specialNotes?: string | null
   previewUrl?: string | null
-  createdAt: Date
+  createdAt: string
   offer?: { title: string } | null
   images: { id: string; imageUrl: string }[]
 }

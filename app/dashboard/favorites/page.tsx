@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { FavoritesManager } from '@/components/dashboard/favorites-manager'
 import { PageTransition } from '@/components/animations/page-transition'
@@ -18,26 +18,31 @@ async function getUserFavorites() {
     }
 
     // Get all gallery images for the favorites manager to work with
-    const galleryImages = await prisma.galleryImage.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        imageUrl: true,
-        style: true,
-        tags: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    })
+    const { data: galleryImages, error } = await supabaseServer
+      .from('gallery_images')
+      .select(`
+        id,
+        title,
+        description,
+        imageUrl,
+        style,
+        tags,
+        createdAt,
+        updatedAt
+      `)
+      .eq('isActive', true)
+      .order('orderIndex', { ascending: true })
 
-    // Serialize dates to avoid hydration issues
-    const serializedImages = galleryImages.map(image => ({
+    if (error) {
+      console.error('Error fetching gallery images:', error)
+      return { galleryImages: [], userId: session.userId }
+    }
+
+    // Return images with consistent date format
+    const serializedImages = (galleryImages || []).map(image => ({
       ...image,
-      createdAt: image.createdAt.toISOString(),
-      updatedAt: image.updatedAt.toISOString(),
+      createdAt: image.createdAt || new Date().toISOString(),
+      updatedAt: image.updatedAt || new Date().toISOString(),
     }))
 
     return { galleryImages: serializedImages, userId: session.userId }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -17,21 +17,31 @@ export async function PATCH(
     const { id } = params
 
     // Get current offer
-    const currentOffer = await prisma.offer.findUnique({
-      where: { id }
-    })
+    const { data: currentOffer } = await supabaseServer
+      .from('offers')
+      .select('*')
+      .eq('id', id)
+      .single()
 
     if (!currentOffer) {
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
     }
 
     // Toggle active status
-    const offer = await prisma.offer.update({
-      where: { id },
-      data: {
-        isActive: !currentOffer.isActive
-      }
-    })
+    const { data: offer, error } = await supabaseServer
+      .from('offers')
+      .update({
+        isActive: !currentOffer.isActive,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error toggling offer status:', error)
+      return NextResponse.json({ error: 'Failed to toggle offer status' }, { status: 500 })
+    }
 
     return NextResponse.json(offer)
   } catch (error) {

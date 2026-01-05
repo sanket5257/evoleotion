@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { GalleryManager } from '@/components/admin/gallery-manager'
 
 // Force dynamic rendering - prevents static generation at build time
@@ -7,15 +7,21 @@ export const revalidate = 0
 
 async function getGalleryImages() {
   try {
-    const images = await prisma.galleryImage.findMany({
-      orderBy: { order: 'asc' }
-    })
+    const { data: images, error } = await supabaseServer
+      .from('gallery_images')
+      .select('*')
+      .order('orderIndex', { ascending: true })
     
-    // Serialize dates to avoid hydration issues
-    return images.map(image => ({
+    if (error) {
+      console.error('Error fetching gallery images:', error)
+      return []
+    }
+    
+    // Return images with consistent date format
+    return (images || []).map(image => ({
       ...image,
-      createdAt: image.createdAt.toISOString(),
-      updatedAt: image.updatedAt.toISOString(),
+      createdAt: image.createdAt || new Date().toISOString(),
+      updatedAt: image.updatedAt || new Date().toISOString(),
     }))
   } catch (error) {
     console.error('Error fetching gallery images:', error)

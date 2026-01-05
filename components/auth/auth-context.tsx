@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
 
 interface User {
   id: string
@@ -16,6 +17,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
   clearError: () => void
+  refreshSession: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,17 +42,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       setError(null)
+      
+      // First check Supabase session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('Supabase session error:', sessionError)
+        setUser(null)
+        return
+      }
+
+      if (!session) {
+        setUser(null)
+        return
+      }
+
+      // Get user profile from our API
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
       
       const response = await fetch('/api/auth/session', {
         signal: controller.signal,
-        cache: 'no-store'
+        cache: 'no-store',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       })
       
       clearTimeout(timeoutId)
       
       if (!response.ok) {
+        if (response.status === 401) {
+          // Session expired, sign out
+          await supabase.auth.signOut()
+          setUser(null)
+          return
+        }
         throw new Error(`Session check failed: ${response.status}`)
       }
       
@@ -74,10 +101,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mounted])
 
+  const refreshSession = useCallback(async () => {
+    await checkSession()
+  }, [checkSession])
+
   useEffect(() => {
     if (mounted) {
       checkSession()
     }
+  }, [mounted, checkSession])
+
+  // Listen for auth state changes
+  useEffect(() => {
+    if (!mounted) return
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email)
+        
+        if (event === 'SIGNED_IN' && session) {
+          // User signed in, refresh session
+          await checkSession()
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out
+          setUser(null)
+          setError(null)
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          // Token refreshed, update session
+          await checkSession()
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [mounted, checkSession])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -140,6 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null)
       
+      // Sign out from Supabase
+      await supabase.auth.signOut()
+      
+      // Also call our API to clear server-side session
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
       
@@ -165,7 +225,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     signIn,
     signOut,
-    clearError
+    clearError,
+    refreshSession
   }
 
   return (
