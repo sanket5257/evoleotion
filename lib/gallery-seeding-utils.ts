@@ -1,5 +1,5 @@
-import { supabaseAdmin } from './supabase'
-import { GalleryImage, GalleryImageInsert } from '@/types/supabase'
+import { supabaseServer } from './supabase-server'
+import { Database, GalleryImage, GalleryImageInsert } from '@/types/supabase'
 
 /**
  * Duplicate detection strategies
@@ -75,7 +75,7 @@ export async function checkForDuplicates(
     }
     
     // Query database for duplicates
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseServer
       .from('gallery_images')
       .select('*')
       .or(conditions.join(','))
@@ -123,7 +123,7 @@ export async function handleDuplicate(
         }
       
       case DuplicateStrategy.UPDATE:
-        const { data: updatedData, error: updateError } = await supabaseAdmin
+        const { data: updatedData, error: updateError } = await supabaseServer
           .from('gallery_images')
           .update({
             title: imageData.title,
@@ -133,7 +133,7 @@ export async function handleDuplicate(
             is_active: imageData.is_active ?? true,
             order_index: imageData.order_index ?? 0,
             updated_at: new Date().toISOString()
-          })
+          } as Database['public']['Tables']['gallery_images']['Update'])
           .eq('id', existingRecord.id)
           .select()
           .single()
@@ -156,12 +156,12 @@ export async function handleDuplicate(
         // Generate new unique public_id
         const newPublicId = `${imageData.public_id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
         
-        const { data: newData, error: createError } = await supabaseAdmin
+        const { data: newData, error: createError } = await supabaseServer
           .from('gallery_images')
           .insert({
             ...imageData,
             public_id: newPublicId
-          })
+          } as Database['public']['Tables']['gallery_images']['Insert'])
           .select()
           .single()
         
@@ -232,7 +232,7 @@ export async function getGalleryStats(): Promise<{
   inactive: number
 }> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseServer
       .from('gallery_images')
       .select('style, is_active')
     
@@ -280,7 +280,7 @@ export async function cleanupOrphanedRecords(): Promise<{
   errors: string[]
 }> {
   try {
-    const { data: allImages, error } = await supabaseAdmin
+    const { data: allImages, error } = await supabaseServer
       .from('gallery_images')
       .select('id, image_url, public_id')
     
@@ -303,7 +303,7 @@ export async function cleanupOrphanedRecords(): Promise<{
     
     // Delete orphaned records
     if (orphanedIds.length > 0) {
-      const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await supabaseServer
         .from('gallery_images')
         .delete()
         .in('id', orphanedIds)

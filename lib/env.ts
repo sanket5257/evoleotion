@@ -14,10 +14,10 @@ export const env = {
   EMAIL_SERVER_PASSWORD: process.env.EMAIL_SERVER_PASSWORD || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@example.com',
   
-  // Cloudinary
-  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+  // Supabase
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   
   // App
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -36,19 +36,19 @@ export const env = {
     const required = [
       'DATABASE_URL',
       'JWT_SECRET',
-      'CLOUDINARY_CLOUD_NAME',
-      'CLOUDINARY_API_KEY',
-      'CLOUDINARY_API_SECRET'
+      'NEXT_PUBLIC_SUPABASE_URL',
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      'SUPABASE_SERVICE_ROLE_KEY'
     ]
     
-    const missing = required.filter(key => !this[key as keyof typeof this])
+    const missing = required.filter(key => !env[key as keyof typeof env])
     
-    if (missing.length > 0 && this.isProduction) {
+    if (missing.length > 0 && env.isProduction) {
       console.error('Missing required environment variables:', missing)
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
     }
     
-    if (missing.length > 0 && this.isDevelopment) {
+    if (missing.length > 0 && env.isDevelopment) {
       console.warn('Missing environment variables (development):', missing)
     }
     

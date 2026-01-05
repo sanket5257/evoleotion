@@ -7,11 +7,6 @@ const nextConfig = {
         hostname: 'wcytdeycgdulgnxkdjgh.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
-      // Keep Cloudinary for backward compatibility during migration
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
     ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
