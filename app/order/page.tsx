@@ -1,6 +1,6 @@
 import { OrderForm } from '@/components/order/order-form'
 import { PageTransition } from '@/components/animations/page-transition'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { Navbar } from '@/components/layout/navbar'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { RefreshButton } from '@/components/ui/refresh-button'
@@ -11,38 +11,30 @@ export const revalidate = 0
 
 async function getOrderData() {
   try {
-    // Add timeout to database queries
-    const queryTimeout = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database query timeout')), 10000)
-    )
+    // Get pricing data
+    const { data: pricing, error: pricingError } = await supabaseServer
+      .from('pricing')
+      .select('*')
+      .eq('isActive', true)
+      .order('style', { ascending: true })
 
-    const [pricing, offers] = await Promise.race([
-      Promise.all([
-        prisma.pricing.findMany({
-          where: { isActive: true },
-          orderBy: { style: 'asc' }
-        }).catch(() => []), // Return empty array on error
-        prisma.offer.findMany({
-          where: {
-            isActive: true,
-            OR: [
-              { startDate: null },
-              { startDate: { lte: new Date() } }
-            ],
-            AND: [
-              {
-                OR: [
-                  { endDate: null },
-                  { endDate: { gte: new Date() } }
-                ]
-              }
-            ]
-          },
-          orderBy: { priority: 'desc' }
-        }).catch(() => []) // Return empty array on error
-      ]),
-      queryTimeout
-    ]) as [any[], any[]]
+    if (pricingError) {
+      console.error('Pricing fetch error:', pricingError)
+    }
+
+    // Get active offers
+    const currentDate = new Date().toISOString()
+    const { data: offers, error: offersError } = await supabaseServer
+      .from('offers')
+      .select('*')
+      .eq('isActive', true)
+      .or(`startDate.is.null,startDate.lte.${currentDate}`)
+      .or(`endDate.is.null,endDate.gte.${currentDate}`)
+      .order('priority', { ascending: false })
+
+    if (offersError) {
+      console.error('Offers fetch error:', offersError)
+    }
 
     return { 
       pricing: pricing || [], 
@@ -57,18 +49,26 @@ async function getOrderData() {
       pricing: [
         {
           id: 'fallback-1',
-          style: 'Pencil Portrait',
-          size: '8x10 inches',
+          style: 'Portrait',
+          size: 'A4',
           numberOfFaces: 1,
-          basePrice: 2500,
+          basePrice: 1500,
           isActive: true
         },
         {
           id: 'fallback-2',
-          style: 'Charcoal Portrait',
-          size: '8x10 inches',
+          style: 'Sketch',
+          size: 'A4',
           numberOfFaces: 1,
-          basePrice: 3000,
+          basePrice: 1500,
+          isActive: true
+        },
+        {
+          id: 'fallback-3',
+          style: 'Realistic',
+          size: 'A4',
+          numberOfFaces: 1,
+          basePrice: 1500,
           isActive: true
         }
       ], 

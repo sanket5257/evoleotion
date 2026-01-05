@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { PricingTable } from '@/components/pricing/pricing-table'
 import { PageTransition } from '@/components/animations/page-transition'
 import { Star, Shield, Clock, Palette } from 'lucide-react'
@@ -10,36 +10,37 @@ export const revalidate = 0
 
 async function getPricingData() {
   try {
-    const [pricing, offers] = await Promise.all([
-      prisma.pricing.findMany({
-        where: { isActive: true },
-        orderBy: [
-          { style: 'asc' },
-          { numberOfFaces: 'asc' },
-          { size: 'asc' }
-        ]
-      }),
-      prisma.offer.findMany({
-        where: {
-          isActive: true,
-          OR: [
-            { startDate: null },
-            { startDate: { lte: new Date() } }
-          ],
-          AND: [
-            {
-              OR: [
-                { endDate: null },
-                { endDate: { gte: new Date() } }
-              ]
-            }
-          ]
-        },
-        orderBy: { priority: 'desc' }
-      })
-    ])
+    // Get pricing data
+    const { data: pricing, error: pricingError } = await supabaseServer
+      .from('pricing')
+      .select('*')
+      .eq('isActive', true)
+      .order('style', { ascending: true })
+      .order('numberOfFaces', { ascending: true })
+      .order('size', { ascending: true })
 
-    return { pricing, offers }
+    if (pricingError) {
+      console.error('Error fetching pricing:', pricingError)
+    }
+
+    // Get active offers
+    const currentDate = new Date().toISOString()
+    const { data: offers, error: offersError } = await supabaseServer
+      .from('offers')
+      .select('*')
+      .eq('isActive', true)
+      .or(`startDate.is.null,startDate.lte.${currentDate}`)
+      .or(`endDate.is.null,endDate.gte.${currentDate}`)
+      .order('priority', { ascending: false })
+
+    if (offersError) {
+      console.error('Error fetching offers:', offersError)
+    }
+
+    return { 
+      pricing: pricing || [], 
+      offers: offers || [] 
+    }
   } catch (error) {
     console.error('Error fetching pricing data:', error)
     return { pricing: [], offers: [] }

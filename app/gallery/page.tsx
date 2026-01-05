@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { GalleryGrid } from '@/components/gallery/gallery-grid'
 import { GalleryFilters } from '@/components/gallery/gallery-filters'
 import { Navbar } from '@/components/layout/navbar'
@@ -9,25 +9,37 @@ export const revalidate = 0
 
 async function getGalleryData() {
   try {
-    const [images, styles] = await Promise.all([
-      prisma.galleryImage.findMany({
-        where: { isActive: true },
-        orderBy: { order: 'asc' }
-      }),
-      prisma.galleryImage.findMany({
-        where: { isActive: true },
-        select: { style: true },
-        distinct: ['style']
-      })
-    ])
+    // Get active gallery images
+    const { data: images, error: imagesError } = await supabaseServer
+      .from('gallery_images')
+      .select('*')
+      .eq('isActive', true)
+      .order('order', { ascending: true })
+
+    if (imagesError) {
+      console.error('Error fetching gallery images:', imagesError)
+    }
+
+    // Get distinct styles
+    const { data: stylesData, error: stylesError } = await supabaseServer
+      .from('gallery_images')
+      .select('style')
+      .eq('isActive', true)
+
+    if (stylesError) {
+      console.error('Error fetching gallery styles:', stylesError)
+    }
+
+    // Extract unique styles
+    const uniqueStyles = [...new Set((stylesData || []).map(item => item.style))]
 
     return {
-      images: images.map(image => ({
+      images: (images || []).map(image => ({
         ...image,
-        createdAt: image.createdAt.toISOString(),
-        updatedAt: image.updatedAt.toISOString(),
+        createdAt: image.createdAt || new Date().toISOString(),
+        updatedAt: image.updatedAt || new Date().toISOString(),
       })),
-      styles: styles.map(s => s.style)
+      styles: uniqueStyles
     }
   } catch (error) {
     console.error('Error fetching gallery data:', error)
