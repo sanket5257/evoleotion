@@ -351,20 +351,12 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
-                <Link 
-                  href="/auth/signin" 
-                  className="text-sm uppercase tracking-widest hover:text-gray-300 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  href="/auth/signup" 
-                  className="px-4 py-2 border border-white/30 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              <Link 
+                href="/auth/signin" 
+                className="px-4 py-2 border border-white/30 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300"
+              >
+                Sign In
+              </Link>
             )}
           </div>
         </div>
@@ -476,23 +468,15 @@ export function Navbar() {
               ) : (
                 <div className="space-y-3">
                   <div className="text-center mb-4">
-                    <p className="text-gray-400 text-sm mb-3">Join us to start your portrait journey</p>
+                    <p className="text-gray-400 text-sm mb-3">Sign in to access your account</p>
                   </div>
                   <Link
                     href="/auth/signin"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center space-x-2 p-3 text-white hover:bg-white/10 transition-colors border border-white/20 rounded-lg"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Sign In</span>
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center justify-center space-x-2 p-3 bg-white text-black hover:bg-gray-200 transition-colors duration-300 rounded-lg font-medium"
                   >
                     <User className="w-4 h-4" />
-                    <span>Create Account</span>
+                    <span>Sign In</span>
                   </Link>
                 </div>
               )}
