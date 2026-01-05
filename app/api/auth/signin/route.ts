@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/session'
-import { withRetry } from '@/lib/db-utils'
+import { getUserByEmail } from '@/lib/supabase-server'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -36,12 +35,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user in database with retry
-    const user = await withRetry(async () => {
-      return await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      })
-    })
+    // Find user in database
+    const user = await getUserByEmail(email)
 
     if (!user || !user.password) {
       return NextResponse.json(

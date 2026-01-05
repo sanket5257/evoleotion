@@ -35,10 +35,12 @@ export async function createUser(userData: {
   const { data, error } = await supabaseServer
     .from('users')
     .insert({
+      id: crypto.randomUUID(),
       name: userData.name.trim(),
       email: userData.email.toLowerCase(),
       password: userData.password,
-      role: userData.role || 'USER'
+      role: userData.role || 'USER',
+      updatedAt: new Date().toISOString()
     })
     .select()
     .single()
