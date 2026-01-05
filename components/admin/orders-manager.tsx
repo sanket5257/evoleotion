@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Edit, MessageCircle, Upload } from 'lucide-react'
+import { Eye, Edit, MessageCircle, Upload, Download, DownloadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
@@ -138,6 +138,70 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
     }
   }
 
+  const getImageInfo = (imageUrl: string) => {
+    // Extract filename from URL
+    const urlParts = imageUrl.split('/')
+    const filename = urlParts[urlParts.length - 1]
+    
+    // Try to determine file type from URL
+    const extension = filename.split('.').pop()?.toLowerCase()
+    const fileType = extension ? extension.toUpperCase() : 'Unknown'
+    
+    return { filename, fileType }
+  }
+
+  const downloadImage = async (imageUrl: string, filename?: string) => {
+    try {
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Generate filename if not provided
+      const finalFilename = filename || `order-${selectedOrder?.orderNumber}-image-${Date.now()}.jpg`
+      link.download = finalFilename
+      
+      // Trigger download
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading image:', error)
+      alert('Failed to download image. Please try again.')
+    }
+  }
+
+  const downloadAllImages = async (order: Order) => {
+    if (order.images.length === 0) {
+      alert('No images to download for this order.')
+      return
+    }
+
+    try {
+      // Download each image with a numbered filename
+      for (let i = 0; i < order.images.length; i++) {
+        const image = order.images[i]
+        const filename = `${order.orderNumber}-image-${i + 1}.jpg`
+        
+        // Add a small delay between downloads to avoid overwhelming the browser
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+        
+        await downloadImage(image.imageUrl, filename)
+      }
+    } catch (error) {
+      console.error('Error downloading all images:', error)
+      alert('Failed to download some images. Please try again.')
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -223,8 +287,14 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                     <div className="text-sm text-gray-900 dark:text-white">
                       {order.style} • {order.size}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {order.numberOfFaces} {order.numberOfFaces === 1 ? 'person' : 'people'}
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">
+                      <span>{order.numberOfFaces} {order.numberOfFaces === 1 ? 'person' : 'people'}</span>
+                      {order.images.length > 0 && (
+                        <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                          <Upload className="w-3 h-3" />
+                          <span>{order.images.length} image{order.images.length !== 1 ? 's' : ''}</span>
+                        </span>
+                      )}
                     </div>
                   </td>
                   
@@ -260,14 +330,29 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                           setSelectedOrder(order)
                           setAdminNotes(order.adminNotes || '')
                         }}
+                        title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
+                      
+                      {order.images.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => downloadAllImages(order)}
+                          className="text-blue-600 hover:text-blue-700"
+                          title={`Download ${order.images.length} image${order.images.length !== 1 ? 's' : ''}`}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
+                      
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => openWhatsApp(order)}
                         className="text-green-600 hover:text-green-700"
+                        title="Contact via WhatsApp"
                       >
                         <MessageCircle className="w-4 h-4" />
                       </Button>
@@ -353,16 +438,57 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
               {/* Images */}
               {selectedOrder.images.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-lg font-semibold mb-4">Customer Images</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {selectedOrder.images.map((image) => (
-                      <img
-                        key={image.id}
-                        src={image.imageUrl}
-                        alt="Customer upload"
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
-                    ))}
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-semibold">Customer Images ({selectedOrder.images.length})</h4>
+                    <Button
+                      onClick={() => downloadAllImages(selectedOrder)}
+                      className="flex items-center space-x-2"
+                      size="sm"
+                    >
+                      <DownloadCloud className="w-4 h-4" />
+                      <span>Download All</span>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {selectedOrder.images.map((image, index) => {
+                      const { filename, fileType } = getImageInfo(image.imageUrl)
+                      return (
+                        <div key={image.id} className="relative group">
+                          <img
+                            src={image.imageUrl}
+                            alt={`Customer upload ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                          />
+                          
+                          {/* Download overlay */}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                            <Button
+                              onClick={() => downloadImage(image.imageUrl, `${selectedOrder.orderNumber}-image-${index + 1}.jpg`)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              size="sm"
+                              variant="outline"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Image number badge */}
+                          <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                            {index + 1}
+                          </div>
+                          
+                          {/* File type badge */}
+                          <div className="absolute top-2 right-2 bg-blue-600 bg-opacity-80 text-white text-xs px-1 py-0.5 rounded">
+                            {fileType}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  
+                  {/* Image info */}
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <p>💡 Tip: Hover over images to download individually, or use "Download All" to get all images at once.</p>
                   </div>
                 </div>
               )}
