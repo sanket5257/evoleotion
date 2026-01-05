@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/session'
+import { withRetry } from '@/lib/db-utils'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,15 +36,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user in database with timeout
-    const user = await Promise.race([
-      prisma.user.findUnique({
+    // Find user in database with retry
+    const user = await withRetry(async () => {
+      return await prisma.user.findUnique({
         where: { email: email.toLowerCase() },
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database timeout')), 10000)
-      )
-    ]) as any
+      })
+    })
 
     if (!user || !user.password) {
       return NextResponse.json(

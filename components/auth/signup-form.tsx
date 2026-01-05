@@ -77,7 +77,15 @@ export function SignUpForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create account')
+        // Handle specific error codes
+        if (response.status === 409) {
+          setError('An account with this email already exists. Please sign in instead.')
+        } else if (response.status === 503) {
+          setError('Service temporarily unavailable. Please try again in a moment.')
+        } else {
+          setError(data.error || 'Failed to create account. Please try again.')
+        }
+        return
       }
 
       // Auto sign in after successful registration
@@ -87,12 +95,21 @@ export function SignUpForm() {
       )
 
       if (!result.success) {
-        setError('Account created but failed to sign in. Please try signing in manually.')
+        setError('Account created successfully! Please sign in to continue.')
+        // Redirect to signin page after a delay
+        setTimeout(() => {
+          router.push('/auth/signin')
+        }, 2000)
       } else {
-        router.push('/')
+        router.push('/dashboard')
       }
     } catch (error: any) {
-      setError(error.message || 'An error occurred. Please try again.')
+      console.error('Signup error:', error)
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.')
+      } else {
+        setError('An unexpected error occurred. Please try again.')
+      }
     } finally {
       setLoading(false)
     }

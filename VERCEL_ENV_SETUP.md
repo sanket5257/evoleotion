@@ -10,10 +10,11 @@ JWT_SECRET=your-super-secure-random-string-here-at-least-32-characters-long
 ```
 **Important**: This must be the same across all deployments. Generate a secure random string.
 
-### 2. Database URL
+### 2. Database URL (with Connection Pooling)
 ```
-DATABASE_URL=your-postgresql-connection-string
+DATABASE_URL=postgresql://postgres:your-password@db.wcytdeycgdulgnxkdjgh.supabase.co:5432/postgres?pgbouncer=true&connection_limit=1
 ```
+**Important**: For Supabase, add `?pgbouncer=true&connection_limit=1` to enable connection pooling and limit connections for serverless environments.
 
 ### 3. Cloudinary Configuration (if using image uploads)
 ```
@@ -42,6 +43,11 @@ COOKIE_DOMAIN=yourdomain.com
 ### Session Logout Issue
 - **Cause**: Missing or incorrect JWT_SECRET
 - **Solution**: Ensure JWT_SECRET is set and is the same across all deployments
+
+### Database Connection Issues
+- **Cause**: PostgreSQL connections being closed unexpectedly in serverless environment
+- **Solution**: Use connection pooling with `?pgbouncer=true&connection_limit=1` in DATABASE_URL
+- **Note**: Supabase provides built-in connection pooling via pgbouncer
 
 ### Cookie Not Persisting
 - **Cause**: Domain mismatch or secure cookie issues
