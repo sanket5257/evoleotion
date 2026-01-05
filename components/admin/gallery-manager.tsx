@@ -2,11 +2,12 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Edit, Trash2, Eye, EyeOff, Upload } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, EyeOff, Upload, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { GalleryDetailModal } from '@/components/gallery/gallery-detail-modal'
 import Image from 'next/image'
 
 interface GalleryImage {
@@ -29,11 +30,11 @@ interface GalleryManagerProps {
 export function GalleryManager({ images }: GalleryManagerProps) {
   const router = useRouter()
   const [showAddForm, setShowAddForm] = useState(false)
-  
-
   const [editingImage, setEditingImage] = useState<GalleryImage | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     title: '',
@@ -175,6 +176,11 @@ export function GalleryManager({ images }: GalleryManagerProps) {
     }
   }
 
+  const handlePreview = (image: GalleryImage) => {
+    setPreviewImage(image)
+    setIsPreviewOpen(true)
+  }
+
   const toggleActive = async (id: string, isActive: boolean) => {
     try {
       const response = await fetch(`/api/admin/gallery/${id}/toggle`, {
@@ -240,11 +246,12 @@ export function GalleryManager({ images }: GalleryManagerProps) {
             </div>
 
             <Textarea
-              label="Description"
+              label="Detailed Description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief description of the artwork..."
-              rows={3}
+              placeholder="Provide a detailed description of the artwork, including techniques used, inspiration, or story behind the piece..."
+              rows={4}
+              className="resize-none"
             />
 
             <Input
@@ -395,6 +402,14 @@ export function GalleryManager({ images }: GalleryManagerProps) {
                   <Button
                     size="sm"
                     variant="ghost"
+                    onClick={() => handlePreview(image)}
+                    title="Preview detailed view"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => handleEdit(image)}
                   >
                     <Edit className="w-4 h-4" />
@@ -430,6 +445,16 @@ export function GalleryManager({ images }: GalleryManagerProps) {
           </Button>
         </div>
       )}
+
+      {/* Preview Modal */}
+      <GalleryDetailModal
+        image={previewImage}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false)
+          setPreviewImage(null)
+        }}
+      />
     </div>
   )
 }

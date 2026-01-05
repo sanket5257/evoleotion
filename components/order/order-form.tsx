@@ -328,6 +328,18 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   // Mount effect
   useEffect(() => {
     setMounted(true)
+    
+    // Check for pre-selected style from URL parameters
+    const urlParams = new URLSearchParams(window.location.search)
+    const preSelectedStyle = urlParams.get('style')
+    
+    if (preSelectedStyle) {
+      setFormData(prev => ({
+        ...prev,
+        style: preSelectedStyle
+      }))
+    }
+    
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
