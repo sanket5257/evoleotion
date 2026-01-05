@@ -1,5 +1,5 @@
 // Supabase database utilities and common operations
-import { supabaseAdmin } from './supabase'
+import { supabaseAdmin } from './supabase-server'
 import type { Database } from '@/types/supabase'
 import type { 
   User, UserInsert, UserUpdate,

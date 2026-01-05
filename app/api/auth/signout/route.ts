@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server'
-import { deleteSession } from '@/lib/session'
+import { cookies } from 'next/headers'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
   try {
-    // Delete the Supabase Auth session
-    await deleteSession()
+    console.log('Sign out API called')
+    
+    // Clear the session cookie
+    const cookieStore = cookies()
+    
+    try {
+      cookieStore.set('session-token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0, // Expire immediately
+        path: '/'
+      })
+      console.log('Session cookie cleared')
+    } catch (cookieError) {
+      console.error('Failed to clear session cookie:', cookieError)
+    }
 
     return NextResponse.json({
       success: true,
@@ -22,9 +37,8 @@ export async function POST() {
     })
   } catch (error) {
     console.error('Sign out error:', error)
-    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Sign out failed' },
       { status: 500 }
     )
   }

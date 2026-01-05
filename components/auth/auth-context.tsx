@@ -1,7 +1,6 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
 
 interface User {
   id: string
@@ -43,46 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null)
       
-      // First check Supabase session
-      if (!supabase) {
-        console.error('Supabase client not configured')
-        setUser(null)
-        return
-      }
+      console.log('Checking session with API')
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError) {
-        console.error('Supabase session error:', sessionError)
-        setUser(null)
-        return
-      }
-
-      if (!session) {
-        setUser(null)
-        return
-      }
-
-      // Get user profile from our API
+      // Get user profile from our API (which now uses JWT tokens)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
       
       const response = await fetch('/api/auth/session', {
         signal: controller.signal,
         cache: 'no-store',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+        credentials: 'include' // Important: include cookies
       })
       
       clearTimeout(timeoutId)
       
       if (!response.ok) {
         if (response.status === 401) {
-          // Session expired, sign out
-          if (supabase) {
-            await supabase.auth.signOut()
-          }
+          console.log('Session expired or invalid')
           setUser(null)
           return
         }
@@ -90,7 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       const data = await response.json()
-      setUser(data?.user || null)
+      console.log('Session API response:', data)
+      
+      if (data?.user) {
+        setUser(data.user)
+      } else {
+        console.log('No user data in session response')
+        setUser(null)
+      }
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -117,32 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (mounted) {
       checkSession()
     }
-  }, [mounted, checkSession])
+  }, [mounted]) // Remove checkSession from dependencies to prevent infinite loop
 
-  // Listen for auth state changes
-  useEffect(() => {
-    if (!mounted || !supabase) return
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
-        
-        if (event === 'SIGNED_IN' && session) {
-          // User signed in, refresh session
-          await checkSession()
-        } else if (event === 'SIGNED_OUT') {
-          // User signed out
-          setUser(null)
-          setError(null)
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          // Token refreshed, update session
-          await checkSession()
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [mounted, checkSession])
+  // Remove the duplicate auth state listener useEffect since we're using JWT-based auth
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!mounted) {
@@ -156,45 +116,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
       
+      console.log('Sending sign in request for:', email)
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
         signal: controller.signal,
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include' // Ensure cookies are sent with the request
       })
 
       clearTimeout(timeoutId)
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Sign in failed' }))
-        return { success: false, error: errorData.error || 'Sign in failed' }
+        const errorMessage = errorData.error || 'Sign in failed'
+        console.error('Sign in failed:', errorMessage)
+        setError(errorMessage)
+        return { success: false, error: errorMessage }
       }
 
       const data = await response.json()
+      console.log('Sign in response:', data)
       
       if (data?.user) {
-        setUser(data.user)
+        // Update user state immediately with the response data
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name || email.split('@')[0],
+          role: data.user.role || 'USER'
+        }
+        
+        console.log('Setting user state:', userData)
+        setUser(userData)
+        
         return { success: true }
       } else {
-        return { success: false, error: 'Invalid response format' }
+        const errorMessage = 'Invalid response format: missing user data'
+        console.error(errorMessage)
+        setError(errorMessage)
+        return { success: false, error: errorMessage }
       }
     } catch (error) {
       let errorMessage = 'Network error'
       
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          errorMessage = 'Sign in timed out'
+          errorMessage = 'Sign in timed out. Please try again.'
         } else {
-          errorMessage = error.message || 'Sign in failed'
+          errorMessage = error.message || 'An unexpected error occurred'
         }
+        console.error('Sign in error:', error)
       }
       
       setError(errorMessage)
-      console.error('Sign in error:', error)
       return { success: false, error: errorMessage }
     } finally {
-      setLoading(false)
+      if (mounted) {
+        setLoading(false)
+      }
     }
   }, [mounted])
 
@@ -204,19 +185,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null)
       
-      // Sign out from Supabase
-      if (supabase) {
-        await supabase.auth.signOut()
-      }
-      
-      // Also call our API to clear server-side session
+      // Call our API to clear server-side session
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
       
       await fetch('/api/auth/signout', { 
         method: 'POST',
         signal: controller.signal,
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
       
       clearTimeout(timeoutId)

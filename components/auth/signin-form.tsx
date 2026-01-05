@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,47 @@ export function SignInForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [redirecting, setRedirecting] = useState(false)
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { signIn, user, loading: authLoading } = useAuth()
+  const hasRedirected = useRef(false)
+
+  // Handle redirection when user is authenticated
+  useEffect(() => {
+    console.log('useEffect triggered:', { user, authLoading, hasRedirected: hasRedirected.current })
+    
+    if (user && !authLoading && !hasRedirected.current) {
+      console.log('User is authenticated, determining redirect path')
+      hasRedirected.current = true
+      setRedirecting(true)
+      
+      // Determine redirect path based on user role
+      const redirectPath = user.role === 'ADMIN' ? '/admin' : '/dashboard'
+      console.log('Redirecting to:', redirectPath)
+      
+      // Use setTimeout to ensure the redirect happens after the current render cycle
+      setTimeout(() => {
+        router.push(redirectPath)
+      }, 100)
+    }
+  }, [user, authLoading, router])
+
+  // Show loading screen during redirect
+  if (redirecting) {
+    return (
+      <div className="space-y-6 text-center">
+        <div className="flex items-center justify-center space-x-2">
+          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <span>Redirecting...</span>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading || authLoading) return
+
     setLoading(true)
     setError('')
 
@@ -26,18 +62,19 @@ export function SignInForm() {
       const result = await signIn(email, password)
       console.log('Sign in result:', result)
 
-      if (result.success) {
-        console.log('Sign in successful, redirecting...')
-        // Redirect to dashboard first to test
-        router.push('/dashboard')
-      } else {
-        console.log('Sign in failed:', result.error)
+      if (!result.success) {
         setError(result.error || 'Sign in failed')
         setLoading(false)
+        return
       }
+      
+      // Success - set loading to false so the button updates
+      setLoading(false)
+      console.log('Sign in successful, waiting for user state update')
+      
     } catch (error) {
       console.error('Sign in error:', error)
-      setError('An unexpected error occurred')
+      setError('An unexpected error occurred. Please try again.')
       setLoading(false)
     }
   }
@@ -51,6 +88,7 @@ export function SignInForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Enter your email"
         required
+        disabled={loading || authLoading}
       />
 
       <div className="relative">
@@ -61,11 +99,13 @@ export function SignInForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
           required
+          disabled={loading || authLoading}
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+          disabled={loading || authLoading}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -74,10 +114,10 @@ export function SignInForm() {
       <Button
         type="submit"
         className="w-full flex items-center justify-center space-x-2"
-        disabled={loading}
-        loading={loading}
+        disabled={loading || authLoading}
+        loading={loading || authLoading}
       >
-        {loading ? (
+        {loading || authLoading ? (
           <>
             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
             <span>Signing in...</span>

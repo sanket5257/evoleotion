@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getUserByEmail } from '@/lib/supabase-server'
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { Database } from '@/types/supabase'
+import { SignJWT } from 'jose'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -62,79 +61,64 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create Supabase client for server-side operations
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            try {
-              cookieStore.set({ name, value, ...options })
-            } catch (error) {
-              console.warn('Failed to set cookie:', error)
-            }
-          },
-          remove(name: string, options: any) {
-            try {
-              cookieStore.set({ name, value: '', ...options })
-            } catch (error) {
-              console.warn('Failed to remove cookie:', error)
-            }
-          },
-        },
-      }
-    )
+    console.log('Password verified for user:', user.email)
 
-    // Try to sign in with Supabase Auth using a consistent password approach
-    // We'll use the user's email as both username and a consistent password pattern
-    const authPassword = `auth_${user.id}_${user.email.split('@')[0]}`
+    // Check JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET environment variable is not set')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    console.log('JWT_SECRET is configured, length:', process.env.JWT_SECRET.length)
+
+    // Create a JWT session token using jose
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
     
-    let authSuccess = false
-    
-    // First try to sign in
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    const sessionToken = await new SignJWT({
+      userId: user.id,
       email: user.email,
-      password: authPassword,
+      name: user.name,
+      role: user.role,
     })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(secret)
 
-    if (signInError) {
-      // If sign in fails, try to create the user in Supabase Auth
-      const { data: createUserData, error: createUserError } = await supabase.auth.admin.createUser({
-        email: user.email,
-        password: authPassword,
-        email_confirm: true,
-        user_metadata: {
-          name: user.name,
-          role: user.role,
-          user_id: user.id
-        }
-      })
+    console.log('Created session token for user:', user.email, 'Token length:', sessionToken.length)
 
-      if (!createUserError) {
-        // Now try to sign in again
-        const { data: retrySignInData, error: retrySignInError } = await supabase.auth.signInWithPassword({
-          email: user.email,
-          password: authPassword,
-        })
-        
-        if (!retrySignInError) {
-          authSuccess = true
-        }
+    // Set the session cookie
+    const cookieStore = cookies()
+    
+    try {
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        maxAge: 24 * 60 * 60, // 24 hours
+        path: '/'
       }
-    } else {
-      authSuccess = true
+      
+      console.log('Setting cookie with options:', cookieOptions)
+      cookieStore.set('session-token', sessionToken, cookieOptions)
+      
+      // Verify the cookie was set
+      const setCookie = cookieStore.get('session-token')
+      console.log('Cookie verification - set successfully:', !!setCookie?.value)
+      
+      console.log('Session cookie set for user:', user.email)
+    } catch (cookieError) {
+      console.error('Failed to set session cookie:', cookieError)
+      return NextResponse.json(
+        { error: 'Failed to create session' },
+        { status: 500 }
+      )
     }
 
-    // Even if Supabase Auth fails, we can still proceed with our custom session
-    // This provides a fallback mechanism during the migration
-    if (!authSuccess) {
-      console.warn('Supabase Auth failed for user:', user.email, 'proceeding with custom session')
-    }
+    console.log('Sign in successful for user:', user.email)
 
     return NextResponse.json({
       success: true,

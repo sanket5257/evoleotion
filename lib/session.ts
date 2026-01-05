@@ -1,6 +1,7 @@
-import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { getUserByEmail } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
 
 export interface SessionPayload {
   userId: string
@@ -12,8 +13,7 @@ export interface SessionPayload {
 
 export async function createSession(user: { id: string; email: string; name?: string; role: string }) {
   try {
-    // For now, we'll use a simplified approach
-    // The actual Supabase Auth integration will be handled in the signin route
+    // Session creation is now handled in the signin API route
     console.log('Session created for user:', user.email)
   } catch (error) {
     console.error('Session creation error:', error)
@@ -28,23 +28,36 @@ export async function getSession(): Promise<SessionPayload | null> {
       throw new Error('getSession should only be called on the server')
     }
 
-    // Get the current session from Supabase Auth
-    if (!supabase) {
-      console.error('Supabase client not configured')
-      return null
-    }
+    // Get the session token from cookies
+    const cookieStore = cookies()
+    const sessionToken = cookieStore.get('session-token')?.value
     
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    if (error || !session) {
+    if (!sessionToken) {
+      console.log('No session token found in cookies')
       return null
     }
 
-    // Get user data from our users table using the existing utility
-    const userData = await getUserByEmail(session.user.email!)
+    // Verify the JWT token
+    let sessionPayload: any
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+      const { payload } = await jwtVerify(sessionToken, secret)
+      sessionPayload = payload
+    } catch (jwtError) {
+      console.error('Invalid session token:', jwtError)
+      return null
+    }
+
+    if (!sessionPayload.email || !sessionPayload.userId) {
+      console.error('Invalid session payload structure')
+      return null
+    }
+
+    // Get fresh user data from database
+    const userData = await getUserByEmail(sessionPayload.email)
     
     if (!userData) {
-      console.warn('User not found in users table:', session.user.email)
+      console.warn('User not found in users table:', sessionPayload.email)
       return null
     }
 
@@ -53,7 +66,7 @@ export async function getSession(): Promise<SessionPayload | null> {
       email: userData.email,
       name: userData.name || undefined,
       role: userData.role,
-      expiresAt: new Date(session.expires_at! * 1000).toISOString(),
+      expiresAt: new Date((sessionPayload.exp || 0) * 1000).toISOString(),
     }
   } catch (error) {
     console.error('Session retrieval error:', error)
@@ -69,17 +82,15 @@ export async function deleteSession() {
       return
     }
 
-    // Sign out from Supabase Auth
-    if (!supabase) {
-      console.error('Supabase client not configured')
-      return
-    }
-    
-    const { error } = await supabase.auth.signOut()
-    
-    if (error) {
-      console.error('Failed to sign out:', error)
-    }
+    // Clear the session cookie
+    const cookieStore = cookies()
+    cookieStore.set('session-token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0, // Expire immediately
+      path: '/'
+    })
   } catch (error) {
     console.error('Session deletion error:', error)
   }
@@ -87,26 +98,32 @@ export async function deleteSession() {
 
 export async function getSessionFromRequest(request: NextRequest): Promise<SessionPayload | null> {
   try {
-    // For middleware, we'll use a simplified approach
-    // This is a temporary implementation during the migration
+    // Get the session token from request cookies
+    const sessionToken = request.cookies.get('session-token')?.value
     
-    // Get the current session from Supabase Auth
-    if (!supabase) {
-      console.error('Supabase client not configured')
-      return null
-    }
-    
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    if (error || !session) {
+    if (!sessionToken) {
       return null
     }
 
-    // Get user data from our users table using the existing utility
-    const userData = await getUserByEmail(session.user.email!)
+    // Verify the JWT token
+    let sessionPayload: any
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+      const { payload } = await jwtVerify(sessionToken, secret)
+      sessionPayload = payload
+    } catch (jwtError) {
+      console.error('Invalid session token in middleware:', jwtError)
+      return null
+    }
+
+    if (!sessionPayload.email || !sessionPayload.userId) {
+      return null
+    }
+
+    // Get user data from database
+    const userData = await getUserByEmail(sessionPayload.email)
     
     if (!userData) {
-      console.warn('User not found in users table:', session.user.email)
       return null
     }
 
@@ -115,7 +132,7 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
       email: userData.email,
       name: userData.name || undefined,
       role: userData.role,
-      expiresAt: new Date(session.expires_at! * 1000).toISOString(),
+      expiresAt: new Date((sessionPayload.exp || 0) * 1000).toISOString(),
     }
   } catch (error) {
     console.error('Session request error:', error)
@@ -123,9 +140,8 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
   }
 }
 
-// Helper function to update middleware response with Supabase cookies
+// Helper function to update middleware response with cookies
 export async function updateSupabaseResponse(request: NextRequest, response: NextResponse) {
-  // For now, just return the response as-is
-  // This will be enhanced in future iterations
+  // For JWT-based auth, we don't need to update Supabase cookies
   return response
 }

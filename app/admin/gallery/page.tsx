@@ -10,16 +10,17 @@ async function getGalleryImages() {
     const { data: images, error } = await supabaseServer
       .from('gallery_images')
       .select('*')
-      .order('orderIndex', { ascending: true })
+      .order('order', { ascending: true })
     
     if (error) {
       console.error('Error fetching gallery images:', error)
       return []
     }
     
-    // Return images with consistent date format
+    // Return images with consistent date format and fix the orderIndex property
     return (images || []).map(image => ({
       ...image,
+      orderIndex: image.order || 0, // Map 'order' to 'orderIndex' for compatibility
       createdAt: image.createdAt || new Date().toISOString(),
       updatedAt: image.updatedAt || new Date().toISOString(),
     }))

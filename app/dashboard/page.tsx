@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { supabaseServer } from '@/lib/supabase-server'
-import { PageTransition } from '@/components/animations/page-transition'
-import { UserOrders } from '@/components/dashboard/user-orders'
-import { Navbar } from '@/components/layout/navbar'
+import { DashboardClient } from '@/components/dashboard/dashboard-client'
 
 // Force dynamic rendering - prevents static generation at build time
 export const dynamic = 'force-dynamic'
@@ -47,29 +45,5 @@ export default async function DashboardPage() {
 
   const orders = await getUserOrders(session.userId)
 
-  return (
-    <PageTransition>
-      <div className="min-h-screen bg-black text-white">
-        {/* Navigation */}
-        <Navbar />
-
-        <div className="px-8 py-16">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-16">
-              <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
-                Dashboard
-              </h1>
-              <div className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
-                Welcome back, <span className="text-white font-medium">{session.name}</span>. 
-                Track your sketch orders and manage your commissions.
-              </div>
-            </div>
-
-            <UserOrders orders={orders} />
-          </div>
-        </div>
-      </div>
-    </PageTransition>
-  )
+  return <DashboardClient orders={orders} />
 }

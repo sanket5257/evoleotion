@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
 import { supabaseServer } from '@/lib/supabase-server'
-import { deleteFromSupabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -151,9 +151,12 @@ export async function DELETE(
     }
 
     // Delete from Supabase Storage if publicId exists
-    if (image.publicId) {
+    if (image.publicId && supabase) {
       try {
-        await deleteFromSupabase(image.publicId)
+        const { error: storageError } = await supabase
+          .storage
+          .from('gallery')
+          .remove([image.publicId])
       } catch (supabaseError) {
         console.error('Error deleting from Supabase:', supabaseError)
         // Continue with database deletion even if Supabase fails
