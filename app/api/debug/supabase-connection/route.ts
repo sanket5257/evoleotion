@@ -23,9 +23,9 @@ export async function GET() {
         success: false,
         error: 'Supabase connection failed',
         details: {
-          code: testError.code || 'unknown',
-          message: testError.message || 'Unknown error',
-          hint: testError.hint || null
+          code: (testError as any).code || 'unknown',
+          message: (testError as any).message || 'Unknown error',
+          hint: (testError as any).hint || null
         },
         queryTime,
         timestamp: new Date().toISOString()
@@ -44,22 +44,28 @@ export async function GET() {
       .select('id')
       .limit(1)
 
+    // Helper function to safely get error message
+    const getErrorMessage = (error: any) => {
+      if (!error) return null
+      return error.message || String(error) || 'Unknown error'
+    }
+
     return NextResponse.json({
       success: true,
       tests: {
         userTable: {
           success: !testError,
-          error: testError ? testError.message || 'Unknown error' : null,
+          error: getErrorMessage(testError),
           hasData: !!testData && testData.length > 0
         },
         pricingTable: {
           success: !pricingError,
-          error: pricingError ? pricingError.message || 'Unknown error' : null,
+          error: getErrorMessage(pricingError),
           hasData: !!pricingData && pricingData.length > 0
         },
         offersTable: {
           success: !offersError,
-          error: offersError ? offersError.message || 'Unknown error' : null,
+          error: getErrorMessage(offersError),
           hasData: !!offersData && offersData.length > 0
         }
       },
