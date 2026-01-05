@@ -15,6 +15,19 @@ export async function createOrder(formData: FormData) {
       return {
         success: false,
         error: 'Authentication required. Please sign in and try again.',
+        requiresAuth: true, // Flag to indicate auth issue
+      }
+    }
+    
+    // Validate session is not expired
+    if (session.expiresAt) {
+      const expiresAt = new Date(session.expiresAt)
+      if (expiresAt < new Date()) {
+        return {
+          success: false,
+          error: 'Your session has expired. Please sign in again.',
+          requiresAuth: true,
+        }
       }
     }
     

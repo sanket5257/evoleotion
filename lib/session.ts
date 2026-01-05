@@ -13,6 +13,33 @@ export interface SessionPayload {
   expiresAt: string
 }
 
+// Get the correct domain for cookies in production
+function getCookieDomain() {
+  if (process.env.NODE_ENV !== 'production') {
+    return undefined // Let browser handle localhost
+  }
+  
+  // For Vercel deployments
+  if (process.env.VERCEL_URL) {
+    return undefined // Let Vercel handle the domain
+  }
+  
+  // For custom domains
+  if (process.env.COOKIE_DOMAIN) {
+    return process.env.COOKIE_DOMAIN
+  }
+  
+  return undefined
+}
+
+export interface SessionPayload {
+  userId: string
+  email: string
+  name?: string
+  role: string
+  expiresAt: string
+}
+
 export async function encrypt(payload: SessionPayload) {
   try {
     return await new SignJWT(payload as any)
@@ -53,13 +80,24 @@ export async function createSession(user: { id: string; email: string; name?: st
     })
 
     const cookieStore = cookies()
-    cookieStore.set('session', session, {
+    
+    // Simplified cookie configuration that works better with Vercel
+    const isProduction = process.env.NODE_ENV === 'production'
+    const cookieOptions = {
       expires: expiresAt,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: 'lax' as const,
       path: '/',
-    })
+    }
+    
+    // Only add domain if explicitly configured
+    const domain = getCookieDomain()
+    if (domain) {
+      (cookieOptions as any).domain = domain
+    }
+    
+    cookieStore.set('session', session, cookieOptions)
   } catch (error) {
     console.error('Session creation error:', error)
     throw new Error('Failed to create session')
@@ -77,16 +115,37 @@ export async function getSession(): Promise<SessionPayload | null> {
     // Check if session is expired
     if (payload?.expiresAt) {
       const expiresAt = new Date(payload.expiresAt)
-      if (expiresAt < new Date()) {
+      const now = new Date()
+      
+      if (expiresAt < now) {
         // Session expired, delete it
         deleteSession()
         return null
+      }
+      
+      // Refresh session if it's close to expiring (within 1 day)
+      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+      if (expiresAt < oneDayFromNow) {
+        try {
+          // Refresh the session
+          await createSession({
+            id: payload.userId,
+            email: payload.email,
+            name: payload.name,
+            role: payload.role
+          })
+        } catch (refreshError) {
+          console.warn('Failed to refresh session:', refreshError)
+          // Continue with existing session
+        }
       }
     }
     
     return payload
   } catch (error) {
     console.error('Session retrieval error:', error)
+    // Clear invalid session
+    deleteSession()
     return null
   }
 }
@@ -94,7 +153,24 @@ export async function getSession(): Promise<SessionPayload | null> {
 export function deleteSession() {
   try {
     const cookieStore = cookies()
-    cookieStore.delete('session')
+    
+    // Simplified deletion that works better with Vercel
+    const isProduction = process.env.NODE_ENV === 'production'
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 0, // Immediately expire
+    }
+    
+    // Only add domain if explicitly configured
+    const domain = getCookieDomain()
+    if (domain) {
+      (cookieOptions as any).domain = domain
+    }
+    
+    cookieStore.set('session', '', cookieOptions)
   } catch (error) {
     console.error('Session deletion error:', error)
   }

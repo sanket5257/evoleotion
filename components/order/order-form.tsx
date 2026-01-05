@@ -307,6 +307,12 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
       if (result?.success && result?.orderId) {
         router.push(`/order/success?orderId=${result.orderId}`)
       } else {
+        // Handle authentication errors specifically
+        if (result?.requiresAuth) {
+          // Redirect to sign in page
+          router.push('/auth/signin?redirect=/order')
+          return
+        }
         setErrors({ submit: result?.error || 'Failed to create order. Please try again.' })
       }
     } catch (error) {
