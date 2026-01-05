@@ -89,10 +89,12 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
       let maxDiscount = 0
 
       try {
-        if (formData.couponCode && offers && offers.length > 0) {
+        if (formData.couponCode && formData.couponCode.trim() && offers && offers.length > 0) {
           const couponOffer = offers.find(o => 
             o && 
-            o.couponCode === formData.couponCode.toUpperCase() &&
+            o.couponCode && 
+            o.couponCode.toUpperCase() === formData.couponCode.toUpperCase() &&
+            o.isActive &&
             (o.minOrderValue ? subtotal >= o.minOrderValue : true) &&
             (Array.isArray(o.applicableStyles) ? 
               o.applicableStyles.length === 0 || o.applicableStyles.includes(formData.style) : 
@@ -679,6 +681,19 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
               placeholder="Enter coupon code"
               className="bg-black border-white/20 text-white placeholder-gray-400 focus:border-white/40"
             />
+            {formData.couponCode && formData.couponCode.trim() && (
+              <div className="mt-2">
+                {priceCalculation.appliedOffer?.couponCode === formData.couponCode.toUpperCase() ? (
+                  <p className="text-green-400 text-sm flex items-center">
+                    ✓ Coupon "{formData.couponCode.toUpperCase()}" applied successfully!
+                  </p>
+                ) : (
+                  <p className="text-red-400 text-sm flex items-center">
+                    ✗ Coupon "{formData.couponCode.toUpperCase()}" is not valid or doesn't meet requirements
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
