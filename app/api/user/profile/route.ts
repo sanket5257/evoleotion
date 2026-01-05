@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -38,14 +38,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Check if email is already taken by another user
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        email,
-        NOT: {
-          id: session.userId
-        }
-      }
-    })
+    const { data: existingUser } = await supabaseServer
+      .from('users')
+      .select('*')
+      .eq('email', email.trim().toLowerCase())
+      .neq('id', session.userId)
+      .single()
 
     if (existingUser) {
       return NextResponse.json(
@@ -55,19 +53,24 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { id: session.userId },
-      data: {
+    const { data: updatedUser, error } = await supabaseServer
+      .from('users')
+      .update({
         name: name.trim(),
-        email: email.trim().toLowerCase()
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true
-      }
-    })
+        email: email.trim().toLowerCase(),
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', session.userId)
+      .select('id, name, email, role')
+      .single()
+
+    if (error) {
+      console.error('Profile update error:', error)
+      return NextResponse.json(
+        { error: 'Failed to update profile' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

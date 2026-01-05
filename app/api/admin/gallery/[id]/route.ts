@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { deleteFromSupabase } from '@/lib/supabase'
 
 // Force dynamic rendering to prevent static evaluation during build
@@ -45,26 +45,31 @@ export async function PUT(
       return NextResponse.json({ error: 'Title and style are required' }, { status: 400 })
     }
 
-    const image = await prisma.galleryImage.update({
-      where: { id },
-      data: {
+    const { data: image, error } = await supabaseServer
+      .from('gallery_images')
+      .update({
         title,
         description: description || null,
         style,
         tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
-        isActive: Boolean(isActive)
+        isActive: Boolean(isActive),
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating gallery image:', error)
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Image not found' }, { status: 404 })
       }
-    })
+      return NextResponse.json({ error: 'Failed to update image' }, { status: 500 })
+    }
 
     return NextResponse.json(image)
   } catch (error) {
     console.error('Error updating gallery image:', error)
-    
-    // Handle Prisma not found error
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 })
-    }
-    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -84,21 +89,31 @@ export async function PATCH(
     const { id } = params
 
     // Find the current image to get the current isActive status
-    const currentImage = await prisma.galleryImage.findUnique({
-      where: { id }
-    })
+    const { data: currentImage } = await supabaseServer
+      .from('gallery_images')
+      .select('*')
+      .eq('id', id)
+      .single()
 
     if (!currentImage) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 })
     }
 
     // Toggle the isActive status
-    const updatedImage = await prisma.galleryImage.update({
-      where: { id },
-      data: {
-        isActive: !currentImage.isActive
-      }
-    })
+    const { data: updatedImage, error } = await supabaseServer
+      .from('gallery_images')
+      .update({
+        isActive: !currentImage.isActive,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error toggling gallery image status:', error)
+      return NextResponse.json({ error: 'Failed to toggle image status' }, { status: 500 })
+    }
 
     return NextResponse.json(updatedImage)
   } catch (error) {
@@ -106,12 +121,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     console.error('Error toggling gallery image status:', error)
-    
-    // Handle Prisma not found error
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 })
-    }
-    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -130,10 +139,12 @@ export async function DELETE(
 
     const { id } = params
 
-    // Get the image to delete from Cloudinary
-    const image = await prisma.galleryImage.findUnique({
-      where: { id }
-    })
+    // Get the image to delete from Supabase Storage
+    const { data: image } = await supabaseServer
+      .from('gallery_images')
+      .select('*')
+      .eq('id', id)
+      .single()
 
     if (!image) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 })
@@ -150,9 +161,15 @@ export async function DELETE(
     }
 
     // Delete from database
-    await prisma.galleryImage.delete({
-      where: { id }
-    })
+    const { error } = await supabaseServer
+      .from('gallery_images')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting gallery image:', error)
+      return NextResponse.json({ error: 'Failed to delete image' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -160,12 +177,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     console.error('Error deleting gallery image:', error)
-    
-    // Handle Prisma not found error
-    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 })
-    }
-    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

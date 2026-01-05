@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -10,16 +10,22 @@ export async function GET() {
   try {
     await requireAdmin()
 
-    const orders = await prisma.order.findMany({
-      include: {
-        user: { select: { name: true, email: true } },
-        offer: { select: { title: true } },
-        images: true,
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const { data: orders, error } = await supabaseServer
+      .from('orders')
+      .select(`
+        *,
+        user:users(name, email),
+        offer:offers(title),
+        images:order_images(*)
+      `)
+      .order('createdAt', { ascending: false })
 
-    return NextResponse.json(orders)
+    if (error) {
+      console.error('Error fetching orders:', error)
+      return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
+    }
+
+    return NextResponse.json(orders || [])
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

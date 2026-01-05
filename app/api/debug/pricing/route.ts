@@ -7,10 +7,12 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
-    const { data: images, error } = await supabaseServer
-      .from('gallery_images')
+    const { data: pricing, error } = await supabaseServer
+      .from('pricing')
       .select('*')
-      .order('createdAt', { ascending: false })
+      .order('style', { ascending: true })
+      .order('size', { ascending: true })
+      .order('numberOfFaces', { ascending: true })
 
     if (error) {
       throw error
@@ -18,20 +20,11 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      count: images?.length || 0,
-      images: (images || []).map(img => ({
-        id: img.id,
-        title: img.title,
-        style: img.style,
-        imageUrl: img.imageUrl,
-        publicId: img.publicId,
-        isActive: img.isActive,
-        order: img.order,
-        createdAt: img.createdAt
-      }))
+      count: pricing?.length || 0,
+      pricing: pricing || []
     })
   } catch (error) {
-    console.error('Error fetching gallery images:', error)
+    console.error('Error fetching pricing:', error)
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

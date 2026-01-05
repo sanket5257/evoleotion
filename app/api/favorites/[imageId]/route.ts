@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,15 +26,15 @@ export async function DELETE(
     }
 
     // Remove from favorites
-    const deleted = await prisma.userFavorite.deleteMany({
-      where: {
-        userId: session.userId,
-        imageId: imageId
-      }
-    })
+    const { error } = await supabaseServer
+      .from('user_favorites')
+      .delete()
+      .eq('userId', session.userId)
+      .eq('imageId', imageId)
 
-    if (deleted.count === 0) {
-      return NextResponse.json({ error: 'Favorite not found' }, { status: 404 })
+    if (error) {
+      console.error('Error removing favorite:', error)
+      return NextResponse.json({ error: 'Failed to remove favorite' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
@@ -57,14 +57,12 @@ export async function GET(
 
     const { imageId } = params
 
-    const favorite = await prisma.userFavorite.findUnique({
-      where: {
-        userId_imageId: {
-          userId: session.userId,
-          imageId: imageId
-        }
-      }
-    })
+    const { data: favorite } = await supabaseServer
+      .from('user_favorites')
+      .select('*')
+      .eq('userId', session.userId)
+      .eq('imageId', imageId)
+      .single()
 
     return NextResponse.json({ isFavorite: !!favorite })
   } catch (error) {

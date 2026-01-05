@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
-import { withRetry } from '@/lib/db-utils'
+import { getUserByEmail, createUser } from '@/lib/supabase-server'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -36,12 +35,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already exists with retry
-    const existingUser = await withRetry(async () => {
-      return await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      })
-    })
+    // Check if user already exists
+    const existingUser = await getUserByEmail(email)
 
     if (existingUser) {
       return NextResponse.json(
@@ -53,16 +48,12 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user with retry
-    const user = await withRetry(async () => {
-      return await prisma.user.create({
-        data: {
-          name: name.trim(),
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          role: 'USER', // Default role
-        },
-      })
+    // Create user
+    const user = await createUser({
+      name: name.trim(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: 'USER', // Default role
     })
 
     return NextResponse.json({
@@ -77,9 +68,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Sign up error:', error)
     
-    // Handle specific Prisma errors
+    // Handle specific errors
     if (error instanceof Error) {
-      if (error.message.includes('Unique constraint')) {
+      if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
         return NextResponse.json(
           { error: 'An account with this email already exists' },
           { status: 409 }

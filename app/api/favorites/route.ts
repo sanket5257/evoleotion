@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,26 +12,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const favorites = await prisma.userFavorite.findMany({
-      where: { userId: session.userId },
-      include: {
-        image: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            imageUrl: true,
-            style: true,
-            tags: true,
-            createdAt: true,
-            updatedAt: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const { data: favorites, error } = await supabaseServer
+      .from('user_favorites')
+      .select(`
+        *,
+        image:gallery_images(
+          id,
+          title,
+          description,
+          imageUrl,
+          style,
+          tags,
+          createdAt,
+          updatedAt
+        )
+      `)
+      .eq('userId', session.userId)
+      .order('createdAt', { ascending: false })
 
-    return NextResponse.json(favorites.map(fav => fav.image))
+    if (error) {
+      console.error('Error fetching favorites:', error)
+      return NextResponse.json({ error: 'Failed to fetch favorites' }, { status: 500 })
+    }
+
+    return NextResponse.json((favorites || []).map(fav => fav.image))
   } catch (error) {
     console.error('Error fetching favorites:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -53,35 +57,44 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if image exists
-    const image = await prisma.galleryImage.findUnique({
-      where: { id: imageId }
-    })
+    const { data: image } = await supabaseServer
+      .from('gallery_images')
+      .select('*')
+      .eq('id', imageId)
+      .single()
 
     if (!image) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 })
     }
 
     // Check if already favorited
-    const existingFavorite = await prisma.userFavorite.findUnique({
-      where: {
-        userId_imageId: {
-          userId: session.userId,
-          imageId: imageId
-        }
-      }
-    })
+    const { data: existingFavorite } = await supabaseServer
+      .from('user_favorites')
+      .select('*')
+      .eq('userId', session.userId)
+      .eq('imageId', imageId)
+      .single()
 
     if (existingFavorite) {
       return NextResponse.json({ error: 'Already favorited' }, { status: 400 })
     }
 
     // Add to favorites
-    const favorite = await prisma.userFavorite.create({
-      data: {
+    const { data: favorite, error } = await supabaseServer
+      .from('user_favorites')
+      .insert({
+        id: crypto.randomUUID(),
         userId: session.userId,
-        imageId: imageId
-      }
-    })
+        imageId: imageId,
+        updatedAt: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error adding favorite:', error)
+      return NextResponse.json({ error: 'Failed to add favorite' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, favorite })
   } catch (error) {

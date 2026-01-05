@@ -1,21 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
 import { uploadToSupabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+// Create Supabase client for database operations
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
+
 export async function GET() {
   try {
     const session = await requireAdmin()
 
-    const images = await prisma.galleryImage.findMany({
-      orderBy: { order: 'asc' }
-    })
+    const { data: images, error } = await supabase
+      .from('gallery_images')
+      .select('*')
+      .order('order', { ascending: true })
 
-    return NextResponse.json(images)
+    if (error) {
+      console.error('Error fetching gallery images:', error)
+      return NextResponse.json({ error: 'Failed to fetch gallery images' }, { status: 500 })
+    }
+
+    return NextResponse.json(images || [])
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -103,14 +121,20 @@ export async function POST(request: NextRequest) {
 
     try {
       // Get the highest order number and increment
-      const lastImage = await prisma.galleryImage.findFirst({
-        orderBy: { order: 'desc' }
-      })
+      const { data: lastImage } = await supabase
+        .from('gallery_images')
+        .select('order')
+        .order('order', { ascending: false })
+        .limit(1)
+        .single()
+
       const nextOrder = (lastImage?.order || 0) + 1
 
       // Save to database
-      const image = await prisma.galleryImage.create({
-        data: {
+      const { data: image, error: dbError } = await supabase
+        .from('gallery_images')
+        .insert({
+          id: crypto.randomUUID(),
           title: title.trim(),
           description: description?.trim() || null,
           imageUrl: uploadResult.secure_url,
@@ -118,9 +142,15 @@ export async function POST(request: NextRequest) {
           style: style.trim(),
           tags: tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [],
           isActive,
-          order: nextOrder
-        }
-      })
+          order: nextOrder,
+          updatedAt: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (dbError) {
+        throw dbError
+      }
 
       return NextResponse.json({
         success: true,

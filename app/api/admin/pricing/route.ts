@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -11,15 +11,19 @@ export async function GET() {
   try {
     await requireAdmin()
 
-    const pricing = await prisma.pricing.findMany({
-      orderBy: [
-        { style: 'asc' },
-        { numberOfFaces: 'asc' },
-        { size: 'asc' }
-      ]
-    })
+    const { data: pricing, error } = await supabaseServer
+      .from('pricing')
+      .select('*')
+      .order('style', { ascending: true })
+      .order('numberOfFaces', { ascending: true })
+      .order('size', { ascending: true })
 
-    return NextResponse.json(pricing)
+    if (error) {
+      console.error('Error fetching pricing:', error)
+      return NextResponse.json({ error: 'Failed to fetch pricing' }, { status: 500 })
+    }
+
+    return NextResponse.json(pricing || [])
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -41,29 +45,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if pricing rule already exists
-    const existingPricing = await prisma.pricing.findUnique({
-      where: {
-        style_size_numberOfFaces: {
-          style,
-          size,
-          numberOfFaces: parseInt(numberOfFaces)
-        }
-      }
-    })
+    const { data: existingPricing } = await supabaseServer
+      .from('pricing')
+      .select('*')
+      .eq('style', style)
+      .eq('size', size)
+      .eq('numberOfFaces', parseInt(numberOfFaces))
+      .single()
 
     if (existingPricing) {
       return NextResponse.json({ error: 'Pricing rule already exists for this combination' }, { status: 400 })
     }
 
-    const pricing = await prisma.pricing.create({
-      data: {
+    const { data: pricing, error } = await supabaseServer
+      .from('pricing')
+      .insert({
+        id: crypto.randomUUID(),
         style,
         size,
         numberOfFaces: parseInt(numberOfFaces),
         basePrice: parseFloat(basePrice),
-        isActive: isActive !== false
-      }
-    })
+        isActive: isActive !== false,
+        updatedAt: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating pricing:', error)
+      return NextResponse.json({ error: 'Failed to create pricing' }, { status: 500 })
+    }
 
     return NextResponse.json(pricing)
   } catch (error) {

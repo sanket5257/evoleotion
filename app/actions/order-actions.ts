@@ -1,7 +1,7 @@
 'use server'
 
 import { getSession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 import { uploadToSupabase } from '@/lib/supabase'
 import { generateOrderNumber, generateWhatsAppUrl } from '@/lib/utils'
 import { orderSchema } from '@/lib/validations'
@@ -179,8 +179,13 @@ export async function createOrder(formData: FormData) {
 
     // Create order in database with timeout
     try {
-      const orderPromise = prisma.order.create({
-        data: {
+      const orderId = crypto.randomUUID()
+      
+      // Create order
+      const { data: order, error: orderError } = await supabaseServer
+        .from('orders')
+        .insert({
+          id: orderId,
           orderNumber,
           userId: session.userId,
           customerName: validatedData.customerName,
@@ -195,20 +200,34 @@ export async function createOrder(formData: FormData) {
           finalPrice,
           offerId,
           couponCode: validatedData.couponCode || null,
-          images: {
-            create: uploadedImages.map((upload) => ({
+          updatedAt: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (orderError) {
+        throw orderError
+      }
+
+      // Create order images
+      if (uploadedImages.length > 0) {
+        const { error: imagesError } = await supabaseServer
+          .from('order_images')
+          .insert(
+            uploadedImages.map((upload) => ({
+              id: crypto.randomUUID(),
+              orderId: orderId,
               imageUrl: upload.secure_url,
               publicId: upload.public_id,
+              updatedAt: new Date().toISOString()
             }))
-          }
+          )
+
+        if (imagesError) {
+          console.error('Error creating order images:', imagesError)
+          // Continue without failing the order creation
         }
-      })
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database timeout')), 15000)
-      )
-
-      const order = await Promise.race([orderPromise, timeoutPromise]) as any
+      }
 
       return {
         success: true,
@@ -272,18 +291,14 @@ export async function getOrderForWhatsApp(orderId: string) {
       }
     }
 
-    // Get order with timeout
-    const orderPromise = prisma.order.findUnique({
-      where: { id: orderId }
-    })
+    // Get order
+    const { data: order, error: orderError } = await supabaseServer
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single()
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database timeout')), 10000)
-    )
-
-    const order = await Promise.race([orderPromise, timeoutPromise]) as any
-
-    if (!order) {
+    if (orderError || !order) {
       return {
         success: false,
         error: 'Order not found',
@@ -294,12 +309,12 @@ export async function getOrderForWhatsApp(orderId: string) {
     let whatsappNumber = '1234567890' // Default fallback
     
     try {
-      const settingsPromise = prisma.adminSettings.findFirst()
-      const settingsTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Settings timeout')), 5000)
-      )
+      const { data: settings } = await supabaseServer
+        .from('admin_settings')
+        .select('*')
+        .limit(1)
+        .single()
       
-      const settings = await Promise.race([settingsPromise, settingsTimeout]) as any
       whatsappNumber = settings?.whatsappNumber || whatsappNumber
     } catch (settingsError) {
       console.warn('Failed to get admin settings, using default WhatsApp number:', settingsError)

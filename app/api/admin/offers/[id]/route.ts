@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -34,21 +34,21 @@ export async function PUT(
 
     // Check if coupon code already exists (excluding current offer)
     if (couponCode) {
-      const existingOffer = await prisma.offer.findFirst({
-        where: {
-          couponCode,
-          id: { not: id }
-        }
-      })
+      const { data: existingOffer } = await supabaseServer
+        .from('offers')
+        .select('*')
+        .eq('couponCode', couponCode)
+        .neq('id', id)
+        .single()
 
       if (existingOffer) {
         return NextResponse.json({ error: 'Coupon code already exists' }, { status: 400 })
       }
     }
 
-    const offer = await prisma.offer.update({
-      where: { id },
-      data: {
+    const { data: offer, error } = await supabaseServer
+      .from('offers')
+      .update({
         title,
         description: description || null,
         type,
@@ -57,13 +57,24 @@ export async function PUT(
         couponCode: couponCode || null,
         isActive,
         priority: parseInt(priority) || 0,
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
+        startDate: startDate ? new Date(startDate).toISOString() : null,
+        endDate: endDate ? new Date(endDate).toISOString() : null,
         minOrderValue: minOrderValue ? parseFloat(minOrderValue) : null,
         applicableStyles: applicableStyles || [],
-        firstOrderOnly: firstOrderOnly || false
+        firstOrderOnly: firstOrderOnly || false,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating offer:', error)
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
       }
-    })
+      return NextResponse.json({ error: 'Failed to update offer' }, { status: 500 })
+    }
 
     return NextResponse.json(offer)
   } catch (error) {
@@ -84,9 +95,15 @@ export async function DELETE(
 
     const { id } = params
 
-    await prisma.offer.delete({
-      where: { id }
-    })
+    const { error } = await supabaseServer
+      .from('offers')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting offer:', error)
+      return NextResponse.json({ error: 'Failed to delete offer' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

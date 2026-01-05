@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -11,11 +11,17 @@ export async function GET() {
   try {
     await requireAdmin()
 
-    const offers = await prisma.offer.findMany({
-      orderBy: { priority: 'desc' }
-    })
+    const { data: offers, error } = await supabaseServer
+      .from('offers')
+      .select('*')
+      .order('priority', { ascending: false })
 
-    return NextResponse.json(offers)
+    if (error) {
+      console.error('Error fetching offers:', error)
+      return NextResponse.json({ error: 'Failed to fetch offers' }, { status: 500 })
+    }
+
+    return NextResponse.json(offers || [])
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -52,17 +58,21 @@ export async function POST(request: NextRequest) {
 
     // Check if coupon code already exists
     if (couponCode) {
-      const existingOffer = await prisma.offer.findUnique({
-        where: { couponCode }
-      })
+      const { data: existingOffer } = await supabaseServer
+        .from('offers')
+        .select('*')
+        .eq('couponCode', couponCode)
+        .single()
 
       if (existingOffer) {
         return NextResponse.json({ error: 'Coupon code already exists' }, { status: 400 })
       }
     }
 
-    const offer = await prisma.offer.create({
-      data: {
+    const { data: offer, error } = await supabaseServer
+      .from('offers')
+      .insert({
+        id: crypto.randomUUID(),
         title,
         description: description || null,
         type,
@@ -71,13 +81,20 @@ export async function POST(request: NextRequest) {
         couponCode: couponCode || null,
         isActive: isActive !== false,
         priority: parseInt(priority) || 0,
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
+        startDate: startDate ? new Date(startDate).toISOString() : null,
+        endDate: endDate ? new Date(endDate).toISOString() : null,
         minOrderValue: minOrderValue ? parseFloat(minOrderValue) : null,
         applicableStyles: applicableStyles || [],
-        firstOrderOnly: firstOrderOnly || false
-      }
-    })
+        firstOrderOnly: firstOrderOnly || false,
+        updatedAt: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating offer:', error)
+      return NextResponse.json({ error: 'Failed to create offer' }, { status: 500 })
+    }
 
     return NextResponse.json(offer)
   } catch (error) {

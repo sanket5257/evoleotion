@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { supabaseServer } from '@/lib/supabase-server'
 
 // Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
@@ -18,15 +18,28 @@ export async function PATCH(
     const body = await request.json()
     const { adminNotes } = body
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { adminNotes },
-      include: {
-        user: { select: { name: true, email: true } },
-        offer: { select: { title: true } },
-        images: true,
+    const { data: order, error } = await supabaseServer
+      .from('orders')
+      .update({ 
+        adminNotes,
+        updatedAt: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        user:users(name, email),
+        offer:offers(title),
+        images:order_images(*)
+      `)
+      .single()
+
+    if (error) {
+      console.error('Error updating order notes:', error)
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 })
       }
-    })
+      return NextResponse.json({ error: 'Failed to update order notes' }, { status: 500 })
+    }
 
     return NextResponse.json(order)
   } catch (error) {
