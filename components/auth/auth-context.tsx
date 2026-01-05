@@ -44,6 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       
       // First check Supabase session
+      if (!supabase) {
+        console.error('Supabase client not configured')
+        setUser(null)
+        return
+      }
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
       if (sessionError) {
@@ -74,7 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         if (response.status === 401) {
           // Session expired, sign out
-          await supabase.auth.signOut()
+          if (supabase) {
+            await supabase.auth.signOut()
+          }
           setUser(null)
           return
         }
@@ -113,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for auth state changes
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || !supabase) return
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -197,7 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       
       // Sign out from Supabase
-      await supabase.auth.signOut()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
       
       // Also call our API to clear server-side session
       const controller = new AbortController()

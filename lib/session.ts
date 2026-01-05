@@ -29,6 +29,11 @@ export async function getSession(): Promise<SessionPayload | null> {
     }
 
     // Get the current session from Supabase Auth
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return null
+    }
+    
     const { data: { session }, error } = await supabase.auth.getSession()
     
     if (error || !session) {
@@ -65,6 +70,11 @@ export async function deleteSession() {
     }
 
     // Sign out from Supabase Auth
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return
+    }
+    
     const { error } = await supabase.auth.signOut()
     
     if (error) {
@@ -81,6 +91,11 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
     // This is a temporary implementation during the migration
     
     // Get the current session from Supabase Auth
+    if (!supabase) {
+      console.error('Supabase client not configured')
+      return null
+    }
+    
     const { data: { session }, error } = await supabase.auth.getSession()
     
     if (error || !session) {

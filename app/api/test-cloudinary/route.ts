@@ -12,6 +12,11 @@ export async function GET() {
   }
 
   try {
+    // Check if Supabase admin client is configured
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured. Please check environment variables.')
+    }
+
     // Test Supabase Storage configuration
     const config = {
       supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,

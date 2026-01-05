@@ -5,6 +5,23 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    // Check if clients are configured
+    if (!supabase) {
+      return NextResponse.json({
+        success: false,
+        error: 'Supabase client not configured',
+        details: 'Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY'
+      }, { status: 500 })
+    }
+
+    if (!supabaseAdmin) {
+      return NextResponse.json({
+        success: false,
+        error: 'Supabase admin client not configured',
+        details: 'Please check SUPABASE_SERVICE_ROLE_KEY'
+      }, { status: 500 })
+    }
+
     // Test basic connection
     const { data, error } = await supabase
       .from('users')

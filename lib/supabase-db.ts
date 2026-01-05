@@ -23,7 +23,11 @@ export class DatabaseError extends Error {
 // Connection management and health check
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin.from('users').select('id').limit(1)
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client not configured')
+      return false
+    }
+    const { error } = await supabaseAdmin!.from('users').select('id').limit(1)
     return !error
   } catch (error) {
     console.error('Database connection check failed:', error)
@@ -68,7 +72,11 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
     offset?: number
   }): Promise<T[]> {
     return withRetry(async () => {
-      let query = supabaseAdmin.from(this.tableName).select('*')
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
+      let query = supabaseAdmin!.from(this.tableName).select('*')
       
       if (options?.where) {
         Object.entries(options.where).forEach(([key, value]) => {
@@ -104,6 +112,10 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async findById(id: string): Promise<T | null> {
     return withRetry(async () => {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
       const { data, error } = await supabaseAdmin
         .from(this.tableName)
         .select('*')
@@ -121,6 +133,10 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async create(data: TInsert): Promise<T> {
     return withRetry(async () => {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
       const { data: result, error } = await supabaseAdmin
         .from(this.tableName)
         .insert(data as any)
@@ -137,6 +153,10 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async update(id: string, data: TUpdate): Promise<T> {
     return withRetry(async () => {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
       const { data: result, error } = await (supabaseAdmin as any)
         .from(this.tableName)
         .update(data)
@@ -154,6 +174,10 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async delete(id: string): Promise<void> {
     return withRetry(async () => {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
       const { error } = await supabaseAdmin
         .from(this.tableName)
         .delete()
@@ -167,7 +191,11 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async count(where?: Record<string, any>): Promise<number> {
     return withRetry(async () => {
-      let query = supabaseAdmin.from(this.tableName).select('*', { count: 'exact', head: true })
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
+      let query = supabaseAdmin!.from(this.tableName).select('*', { count: 'exact', head: true })
       
       if (where) {
         Object.entries(where).forEach(([key, value]) => {
@@ -189,6 +217,10 @@ export class SupabaseRepository<T = any, TInsert = any, TUpdate = any> {
 
   async upsert(data: TInsert, onConflict?: string): Promise<T> {
     return withRetry(async () => {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not configured')
+      }
+      
       const { data: result, error } = await supabaseAdmin
         .from(this.tableName)
         .upsert(data as any, { onConflict })
@@ -219,6 +251,10 @@ export const adminSettingsRepository = new SupabaseRepository<AdminSettings, Adm
 // User operations
 export async function getUserByEmail(email: string): Promise<User | null> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -288,6 +324,10 @@ export async function getPricingByDetails(
   numberOfFaces: number
 ): Promise<Pricing | null> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('pricing')
       .select('*')
@@ -309,6 +349,10 @@ export async function getPricingByDetails(
 // Offer operations
 export async function getActiveOffers(): Promise<Offer[]> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const now = new Date().toISOString()
     const { data, error } = await supabaseAdmin
       .from('offers')
@@ -328,6 +372,10 @@ export async function getActiveOffers(): Promise<Offer[]> {
 
 export async function getOfferByCouponCode(couponCode: string): Promise<Offer | null> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('offers')
       .select('*')
@@ -360,6 +408,10 @@ export async function getOrdersByUser(userId: string): Promise<Order[]> {
 
 export async function getOrderByNumber(orderNumber: string): Promise<Order | null> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('orders')
       .select('*')
@@ -378,6 +430,10 @@ export async function getOrderByNumber(orderNumber: string): Promise<Order | nul
 // User favorites operations
 export async function getUserFavorites(userId: string): Promise<(UserFavorite & { image: GalleryImage })[]> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('user_favorites')
       .select(`
@@ -397,6 +453,10 @@ export async function getUserFavorites(userId: string): Promise<(UserFavorite & 
 
 export async function toggleUserFavorite(userId: string, imageId: string): Promise<{ added: boolean }> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     // Check if favorite exists
     const { data: existing } = await supabaseAdmin
       .from('user_favorites')
@@ -423,6 +483,10 @@ export async function toggleUserFavorite(userId: string, imageId: string): Promi
 // Admin settings operations
 export async function getAdminSettings(): Promise<AdminSettings | null> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('admin_settings')
       .select('*')
@@ -477,6 +541,10 @@ export async function batchInsert<T extends keyof Database['public']['Tables']>(
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize)
     
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     const { data: batchResults, error } = await supabaseAdmin
       .from(tableName)
       .insert(batch as any)
@@ -498,6 +566,10 @@ export async function searchGalleryImages(query: string, options?: {
   limit?: number
 }): Promise<GalleryImage[]> {
   return withRetry(async () => {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
     let dbQuery = supabaseAdmin
       .from('gallery_images')
       .select('*')
@@ -532,7 +604,11 @@ export async function getOrderStats(dateRange?: { from: string; to: string }): P
   ordersByStatus: Record<string, number>
 }> {
   return withRetry(async () => {
-    let query = supabaseAdmin.from('orders').select('*')
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not configured')
+    }
+    
+    let query = supabaseAdmin!.from('orders').select('*')
     
     if (dateRange) {
       query = query

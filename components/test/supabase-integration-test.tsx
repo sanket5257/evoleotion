@@ -20,6 +20,10 @@ export function SupabaseIntegrationTest() {
     try {
       // Test 1: Supabase client connection
       addResult('Testing Supabase client connection...')
+      if (!supabase) {
+        addResult('❌ Supabase client not configured')
+        return
+      }
       const { data: { session } } = await supabase.auth.getSession()
       addResult(`✓ Supabase client connected. Session: ${session ? 'Active' : 'None'}`)
 

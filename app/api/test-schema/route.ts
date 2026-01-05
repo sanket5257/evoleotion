@@ -7,6 +7,16 @@ export async function GET() {
   try {
     console.log('Testing Supabase schema...')
 
+    // Check if Supabase admin client is configured
+    if (!supabaseAdmin) {
+      return NextResponse.json({
+        status: 'error',
+        error: 'Supabase admin client not configured',
+        message: 'Please check environment variables',
+        timestamp: new Date().toISOString()
+      }, { status: 500 })
+    }
+
     // Test each table by trying to select from it
     const tables = [
       'users',

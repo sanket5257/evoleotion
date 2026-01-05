@@ -1,32 +1,50 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Validate required environment variables
+if (!supabaseUrl) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
+
+if (!supabaseAnonKey) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+}
+
+if (!supabaseServiceKey) {
+  console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+}
 
 // Client-side Supabase client for authenticated operations
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-})
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
+  : null
 
 // Server-side Supabase client with service role key for admin operations
-export const supabaseAdmin = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+export const supabaseAdmin = supabaseUrl && supabaseServiceKey
+  ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
 
 // Upload image to Supabase Storage
 export const uploadToSupabase = async (file: File, folder: string) => {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not configured. Please check environment variables.')
+  }
+
   try {
     // Validate file
     if (!file || file.size === 0) {
@@ -93,6 +111,10 @@ export const uploadToSupabase = async (file: File, folder: string) => {
 
 // Delete image from Supabase Storage
 export const deleteFromSupabase = async (filePath: string) => {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not configured. Please check environment variables.')
+  }
+
   try {
     const { error } = await supabaseAdmin.storage
       .from('images')
@@ -116,6 +138,11 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
   height?: number
   quality?: number
 }) => {
+  if (!supabaseAdmin) {
+    console.error('Supabase admin client not configured. Returning placeholder URL.')
+    return '/api/placeholder/400/500?text=Image+Not+Available'
+  }
+
   try {
     const { data } = supabaseAdmin.storage
       .from('images')
@@ -131,16 +158,25 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
   } catch (error) {
     console.error('Error getting optimized image URL:', error)
     // Return the basic public URL as fallback
-    const { data } = supabaseAdmin.storage
-      .from('images')
-      .getPublicUrl(filePath)
-    
-    return data.publicUrl
+    try {
+      const { data } = supabaseAdmin.storage
+        .from('images')
+        .getPublicUrl(filePath)
+      
+      return data.publicUrl
+    } catch (fallbackError) {
+      console.error('Error getting basic public URL:', fallbackError)
+      return '/api/placeholder/400/500?text=Image+Error'
+    }
   }
 }
 
 // List all files in a folder
 export const listFilesInFolder = async (folder: string) => {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not configured. Please check environment variables.')
+  }
+
   try {
     const { data, error } = await supabaseAdmin.storage
       .from('images')
@@ -163,6 +199,10 @@ export const listFilesInFolder = async (folder: string) => {
 
 // Get file metadata
 export const getFileMetadata = async (filePath: string) => {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not configured. Please check environment variables.')
+  }
+
   try {
     const { data } = supabaseAdmin.storage
       .from('images')
@@ -177,6 +217,10 @@ export const getFileMetadata = async (filePath: string) => {
 
 // Cleanup orphaned files (files not referenced in database)
 export const cleanupOrphanedFiles = async (referencedPaths: string[]) => {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not configured. Please check environment variables.')
+  }
+
   try {
     // Get all files in the images bucket
     const { data: allFiles, error } = await supabaseAdmin.storage

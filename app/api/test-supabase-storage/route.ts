@@ -12,6 +12,19 @@ export async function GET() {
   }
 
   try {
+    // Check if Supabase admin client is configured
+    if (!supabaseAdmin) {
+      return NextResponse.json({
+        success: false,
+        error: 'Supabase admin client not configured. Please check environment variables.',
+        config: {
+          supabase_url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          has_service_role_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          has_anon_key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        }
+      }, { status: 500 })
+    }
+
     // Test Supabase Storage configuration
     const config = {
       supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
