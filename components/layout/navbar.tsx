@@ -147,7 +147,7 @@ export function Navbar() {
         </div>
         <div className="hidden lg:flex items-center space-x-8">
           <div className="flex space-x-6 text-sm uppercase tracking-widest">
-            {navigationLinks.slice(0, 3).map((link) => (
+            {navigationLinks.slice(0, 5).map((link) => (
               <Link 
                 key={link.href}
                 href={link.href} 
@@ -242,7 +242,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center space-x-6">
           {/* Main Navigation */}
           <div className="flex space-x-6 text-sm uppercase tracking-widest">
-            {navigationLinks.slice(0, 3).map((link) => (
+            {navigationLinks.slice(0, 5).map((link) => (
               <Link 
                 key={link.href}
                 href={link.href} 

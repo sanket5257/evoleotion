@@ -16,15 +16,15 @@ export default function ContactPage() {
       icon: <MessageCircle className="w-6 h-6" />,
       title: 'WhatsApp',
       description: 'Quick questions and updates',
-      contact: '+1 (555) 123-4567',
-      action: 'https://wa.me/15551234567'
+      contact: '+91 7083259985',
+      action: 'https://wa.me/917083259985'
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: 'Call Us',
       description: 'Speak directly with our team',
-      contact: '+1 (555) 123-4567',
-      action: 'tel:+15551234567'
+      contact: '+91 7083259985',
+      action: 'tel:+917083259985'
     }
   ]
 

@@ -11,8 +11,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Evoleotion - Pencil & Charcoal Portrait Studio',
-  description: 'Custom pencil and charcoal portraits. Transform your cherished memories into timeless hand-drawn art with stunning detail and emotion.',
+  title: 'Evoleotion - Leo\'s Portrait Studio | Hand-Drawn Art from India',
+  description: 'Custom pencil and charcoal portraits by Leo, a 22-year-old passionate artist from India. Transform your cherished memories into timeless hand-drawn art with stunning detail and emotion.',
 }
 
 export default function RootLayout({

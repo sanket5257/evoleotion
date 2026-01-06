@@ -2,58 +2,39 @@ import { PageTransition } from '@/components/animations/page-transition'
 import { Navbar } from '@/components/layout/navbar'
 import { Star, Award, Users, Clock, Palette, Heart, Shield, Globe, User } from 'lucide-react'
 
+export const metadata = {
+  title: 'About Leo - Portrait Artist | Evoleotion',
+  description: 'Meet Leo, a 22-year-old passionate portrait artist based in India, specializing in hand-drawn portraits that capture the essence of your precious memories.',
+}
+
 export default function AboutPage() {
   const stats = [
-    { icon: <Users className="w-8 h-8" />, value: '500+', label: 'Happy Customers' },
-    { icon: <Palette className="w-8 h-8" />, value: '1000+', label: 'Portraits Created' },
-    { icon: <Clock className="w-8 h-8" />, value: '5+', label: 'Years Experience' },
-    { icon: <Globe className="w-8 h-8" />, value: '25+', label: 'Countries Served' },
+    { icon: <Users className="w-8 h-8" />, value: '300+', label: 'Happy Customers' },
+    { icon: <Palette className="w-8 h-8" />, value: '500+', label: 'Portraits Created' },
+    { icon: <Clock className="w-8 h-8" />, value: '3+', label: 'Years Experience' },
+    { icon: <Globe className="w-8 h-8" />, value: '15+', label: 'Countries Served' },
   ]
 
   const values = [
     {
       icon: <Heart className="w-12 h-12" />,
       title: 'Passion for Art',
-      description: 'Every stroke is made with love and dedication to create something truly special.'
+      description: 'Every stroke is made with love and dedication to create something truly special for you.'
     },
     {
       icon: <Shield className="w-12 h-12" />,
       title: 'Quality Guarantee',
-      description: 'We stand behind our work with a 100% satisfaction guarantee on every portrait.'
+      description: 'I stand behind my work with a 100% satisfaction guarantee on every portrait I create.'
     },
     {
       icon: <Award className="w-12 h-12" />,
       title: 'Professional Excellence',
-      description: 'Our artists are trained professionals with years of experience in portrait art.'
+      description: 'Continuous learning and improvement to deliver the highest quality artwork every time.'
     },
     {
       icon: <Star className="w-12 h-12" />,
       title: 'Customer First',
-      description: 'Your vision and satisfaction are our top priorities in every project.'
-    },
-  ]
-
-  const team = [
-    {
-      name: 'Sarah Chen',
-      role: 'Lead Portrait Artist',
-      experience: '8+ years',
-      specialty: 'Realistic Portraits',
-      description: 'Specializes in capturing the subtle emotions and expressions that make each portrait unique.'
-    },
-    {
-      name: 'Marcus Rodriguez',
-      role: 'Charcoal Specialist',
-      experience: '6+ years',
-      specialty: 'Dramatic Lighting',
-      description: 'Expert in creating stunning contrast and depth using traditional charcoal techniques.'
-    },
-    {
-      name: 'Emma Thompson',
-      role: 'Pet Portrait Artist',
-      experience: '5+ years',
-      specialty: 'Animal Portraits',
-      description: 'Passionate about capturing the personality and spirit of beloved pets and animals.'
+      description: 'Your vision and satisfaction are my top priorities in every project I undertake.'
     },
   ]
 
@@ -67,10 +48,10 @@ export default function AboutPage() {
         <section className="px-8 py-16">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
-              About Evoleotion
+              About Leo
             </h1>
             <p className="text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12">
-              We are passionate artists dedicated to transforming your cherished memories 
+              Hi, I'm Leo - a 22-year-old passionate artist based in India, dedicated to transforming your cherished memories 
               into timeless hand-drawn portraits that capture the essence of every moment.
             </p>
             
@@ -95,36 +76,37 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
                 <h2 className="text-4xl font-light tracking-wider mb-8">
-                  Our Story
+                  My Journey
                 </h2>
                 <div className="space-y-6 text-gray-400 leading-relaxed">
                   <p>
-                    Evoleotion was born from a simple belief: that every person, every pet, 
-                    and every moment deserves to be captured in its most beautiful form. 
-                    What started as a passion project has grown into a trusted name in 
-                    custom portrait art.
+                    Hi, I'm Leo, a 22-year-old artist from India with a deep passion for creating 
+                    beautiful hand-drawn portraits. My journey into art began at a young age, 
+                    and over the past few years, I've dedicated myself to mastering the craft 
+                    of portrait drawing.
                   </p>
                   <p>
-                    Our journey began with traditional pencil and charcoal techniques, 
-                    passed down through generations of artists. We've combined these 
-                    time-honored methods with modern technology to create a seamless 
-                    experience for our customers worldwide.
+                    What started as a hobby has evolved into my life's work. I believe that 
+                    every person, every pet, and every moment deserves to be captured in its 
+                    most beautiful form. Using traditional pencil and charcoal techniques, 
+                    I create portraits that don't just capture appearance, but soul and emotion.
                   </p>
                   <p>
-                    Today, we're proud to have created over 1,000 portraits for families 
-                    across 25 countries, each one telling a unique story and preserving 
-                    precious memories for generations to come.
+                    Based in India, I've had the privilege of creating portraits for families 
+                    around the world. Each commission is a new story, a new challenge, and 
+                    an opportunity to preserve precious memories that will be treasured for 
+                    generations to come.
                   </p>
                 </div>
               </div>
               
               <div className="relative">
-                <div className="aspect-square bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <Palette className="w-24 h-24 mx-auto mb-4 text-white" />
-                    <p className="text-gray-400">Artist at Work</p>
-                    <p className="text-sm text-gray-500 mt-2">Creating your masterpiece</p>
-                  </div>
+                <div className="aspect-square bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                  <img
+                    src="/me.jpeg"
+                    alt="Leo - Portrait Artist"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>
@@ -136,10 +118,10 @@ export default function AboutPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-light tracking-wider mb-4">
-                What We Stand For
+                What I Stand For
               </h2>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                Our values guide everything we do, from the first sketch to the final delivery
+                My values guide everything I do, from the first sketch to the final delivery
               </p>
             </div>
 
@@ -157,30 +139,45 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Meet Our Team */}
+        {/* Meet the Artist */}
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-light tracking-wider mb-4">
-                Meet Our Artists
+                About the Artist
               </h2>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                Talented professionals who bring your vision to life with skill and passion
+                Get to know Leo - the passionate artist behind every beautiful portrait
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {team.map((member, index) => (
-                <div key={index} className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors rounded-lg">
-                  <div className="w-24 h-24 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center">
-                    <User className="w-12 h-12 text-white" />
-                  </div>
-                  <h3 className="text-xl font-light mb-2">{member.name}</h3>
-                  <p className="text-gray-400 mb-1">{member.role}</p>
-                  <p className="text-sm text-gray-500 mb-4">{member.experience} • {member.specialty}</p>
-                  <p className="text-gray-400 text-sm leading-relaxed">{member.description}</p>
+            <div className="max-w-2xl mx-auto">
+              <div className="text-center p-8 border border-white/10 hover:border-white/20 transition-colors rounded-lg">
+                <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-2 border-white/20">
+                  <img
+                    src="/me.jpeg"
+                    alt="Leo - Portrait Artist"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              ))}
+                <h3 className="text-2xl font-light mb-2">Leo</h3>
+                <p className="text-gray-400 mb-1">Portrait Artist & Founder</p>
+                <p className="text-sm text-gray-500 mb-6">22 years old • Based in India • 3+ years experience</p>
+                <div className="text-gray-400 text-sm leading-relaxed space-y-4">
+                  <p>
+                    "Art has always been my language of expression. At 22, I've dedicated my life to 
+                    mastering the art of portrait drawing, specializing in realistic pencil and charcoal work."
+                  </p>
+                  <p>
+                    "Every portrait I create is a labor of love. I believe in capturing not just how someone 
+                    looks, but who they are - their personality, their essence, their story."
+                  </p>
+                  <p>
+                    "Based in India, I'm proud to serve customers worldwide, bringing their precious memories 
+                    to life through the timeless medium of hand-drawn art."
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -201,16 +198,16 @@ export default function AboutPage() {
               
               <div>
                 <h2 className="text-4xl font-light tracking-wider mb-8">
-                  The Art of Excellence
+                  My Artistic Process
                 </h2>
                 <div className="space-y-6 text-gray-400 leading-relaxed">
                   <p>
-                    Every portrait begins with careful study of your photograph. Our artists 
-                    analyze lighting, composition, and emotional expression to ensure the 
-                    final artwork captures not just appearance, but personality.
+                    Every portrait begins with careful study of your photograph. I analyze 
+                    lighting, composition, and emotional expression to ensure the final 
+                    artwork captures not just appearance, but personality and soul.
                   </p>
                   <p>
-                    Using premium graphite pencils and professional-grade charcoal, we build 
+                    Using premium graphite pencils and professional-grade charcoal, I build 
                     layers of tone and texture. Each stroke is deliberate, each shadow 
                     carefully placed to create depth and bring your portrait to life.
                   </p>
@@ -218,15 +215,6 @@ export default function AboutPage() {
                     The result is museum-quality artwork that preserves your most precious 
                     memories in a timeless medium that will be treasured for generations.
                   </p>
-                </div>
-                
-                <div className="mt-8">
-                  <a
-                    href="/how-it-works"
-                    className="inline-block px-8 py-3 border border-white/30 text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300"
-                  >
-                    See Our Process
-                  </a>
                 </div>
               </div>
             </div>
@@ -240,7 +228,7 @@ export default function AboutPage() {
               Ready to Create Your Portrait?
             </h2>
             <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who have trusted us to capture 
+              Join hundreds of satisfied customers who have trusted me to capture 
               their most precious memories in beautiful hand-drawn art.
             </p>
             
