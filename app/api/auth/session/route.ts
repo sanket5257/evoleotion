@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const sessionToken = cookieStore.get('session-token')?.value
     
     if (!sessionToken) {
-      console.log('No session token found in cookies')
+      console.log('No session token found in cookies - this is normal for new sessions')
       return NextResponse.json({ user: null }, { status: 200 })
     }
 

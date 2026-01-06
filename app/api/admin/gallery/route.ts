@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, requireAdminFromRequest } from '@/lib/admin-auth'
-import { uploadToSupabase } from '@/lib/supabase-server'
+import { uploadToSupabase, supabaseServer } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 
 // Force dynamic rendering to prevent static evaluation during build
@@ -23,6 +23,14 @@ export async function GET() {
   try {
     const session = await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { data: images, error } = await supabase
       .from('gallery_images')
       .select('*')
@@ -46,6 +54,14 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const sessionResult = await requireAdminFromRequest(request)
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     if (sessionResult instanceof NextResponse) {
       return sessionResult // Return unauthorized response
     }

@@ -41,6 +41,12 @@ export async function withRetry<T>(
 // Test database connection
 export async function testConnection(): Promise<boolean> {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return false
+    }
+
     const { data, error } = await supabaseServer
       .from('users')
       .select('id')

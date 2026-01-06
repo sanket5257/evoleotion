@@ -17,6 +17,12 @@ async function getUserFavorites() {
       redirect('/auth/signin')
     }
 
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return { galleryImages: [] }
+    }
+
     // Get all gallery images for the favorites manager to work with
     const { data: galleryImages, error } = await supabaseServer
       .from('gallery_images')

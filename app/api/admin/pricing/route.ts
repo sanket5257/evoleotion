@@ -11,6 +11,14 @@ export async function GET() {
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { data: pricing, error } = await supabaseServer
       .from('pricing')
       .select('*')
@@ -37,6 +45,14 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const body = await request.json()
     const { style, size, numberOfFaces, basePrice, isActive } = body
 

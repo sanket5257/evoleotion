@@ -9,6 +9,14 @@ export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
     const adminResult = await requireAdminFromRequest(request)
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     if (adminResult instanceof NextResponse) {
       return adminResult // Return the unauthorized response
     }

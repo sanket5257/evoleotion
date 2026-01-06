@@ -7,6 +7,12 @@ export const revalidate = 0
 
 async function getSettings() {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return []
+    }
+
     const { data: settings, error } = await supabaseServer
       .from('admin_settings')
       .select('*')

@@ -7,6 +7,14 @@ export const runtime = 'nodejs'
 
 export async function POST() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Define pricing data based on the price chart
     const pricingData = [
       // A5 size (5.8×8.3 IN) - 600RS
@@ -375,6 +383,14 @@ export async function POST() {
 
 export async function DELETE() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Delete all pricing data
     const { error: pricingError } = await supabaseServer
       .from('pricing')

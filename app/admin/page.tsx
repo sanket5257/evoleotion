@@ -9,6 +9,18 @@ export const revalidate = 0
 
 async function getDashboardData() {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return {
+        totalOrders: 0,
+        pendingOrders: 0,
+        totalRevenue: 0,
+        activeOffers: 0,
+        recentOrders: []
+      }
+    }
+
     // Get total orders count
     const { count: totalOrders } = await supabaseServer
       .from('orders')

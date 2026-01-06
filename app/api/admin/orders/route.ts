@@ -10,6 +10,14 @@ export async function GET() {
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { data: orders, error } = await supabaseServer
       .from('orders')
       .select(`

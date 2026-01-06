@@ -6,6 +6,14 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const session = await getSession()
     
     if (!session?.userId) {
@@ -44,6 +52,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const session = await getSession()
     
     if (!session?.userId) {

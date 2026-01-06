@@ -9,36 +9,48 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  if (typeof window === 'undefined') {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  } else {
+    console.warn('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
 }
 
 if (!supabaseServiceKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+  if (typeof window === 'undefined') {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+  } else {
+    console.warn('Missing SUPABASE_SERVICE_ROLE_KEY environment variable - this is expected on client-side')
+  }
 }
 
 // Global instance management for serverless environments
 const globalForSupabase = globalThis as unknown as {
-  supabase: ReturnType<typeof createClient<Database>> | undefined
+  supabase: ReturnType<typeof createClient<Database>> | null | undefined
 }
 
 // Enhanced Supabase configuration for serverless environments
-export const supabase = globalForSupabase.supabase ?? createClient<Database>(
-  supabaseUrl,
-  supabaseServiceKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
-    db: {
-      schema: 'public'
-    },
-    global: {
-      headers: {
-        'x-application-name': 'portrait-studio'
-      }
-    }
-  }
+export const supabase = globalForSupabase.supabase ?? (
+  supabaseUrl && supabaseServiceKey 
+    ? createClient<Database>(
+        supabaseUrl,
+        supabaseServiceKey,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          },
+          db: {
+            schema: 'public'
+          },
+          global: {
+            headers: {
+              'x-application-name': 'portrait-studio'
+            }
+          }
+        }
+      )
+    : null
 )
 
 // Ensure single instance in development
@@ -52,6 +64,9 @@ export const prisma = supabase
 // Connection health check
 export async function checkConnection(): Promise<boolean> {
   try {
+    if (!supabase) {
+      return false
+    }
     const { error } = await supabase.from('users').select('id').limit(1)
     return !error
   } catch (error) {

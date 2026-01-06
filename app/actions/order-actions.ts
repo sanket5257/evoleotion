@@ -30,6 +30,14 @@ export async function createOrder(formData: FormData) {
         }
       }
     }
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return {
+        success: false,
+        error: 'Database connection not available. Please try again later.',
+      }
+    }
     
     // Extract and validate form data
     const data = {
@@ -288,6 +296,14 @@ export async function getOrderForWhatsApp(orderId: string) {
       return {
         success: false,
         error: 'Invalid order ID',
+      }
+    }
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return {
+        success: false,
+        error: 'Database connection not available. Please try again later.',
       }
     }
 

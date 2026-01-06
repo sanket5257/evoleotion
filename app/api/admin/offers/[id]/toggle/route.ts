@@ -14,6 +14,14 @@ export async function PATCH(
   try {
     await requireAdmin()
 
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
+
     const { id } = params
 
     // Get current offer

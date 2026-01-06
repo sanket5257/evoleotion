@@ -98,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (mounted) {
+      console.log('Auth context mounted, checking initial session')
       checkSession()
     }
   }, [mounted]) // Remove checkSession from dependencies to prevent infinite loop
@@ -150,6 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         console.log('Setting user state:', userData)
         setUser(userData)
+        
+        // Add a small delay to ensure the state is set before any redirects
+        setTimeout(() => {
+          console.log('User state should be set now:', userData)
+        }, 50)
         
         return { success: true }
       } else {

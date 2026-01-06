@@ -5,26 +5,42 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Validate required environment variables
 if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  if (typeof window === 'undefined') {
+    // Only throw on server-side
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  } else {
+    console.warn('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
 }
 
 if (!supabaseServiceKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+  if (typeof window === 'undefined') {
+    // Only throw on server-side
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+  } else {
+    console.warn('Missing SUPABASE_SERVICE_ROLE_KEY environment variable - this is expected on client-side')
+  }
 }
 
 // Server-side Supabase client with service role key
-export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+export const supabaseServer = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
 
 // Server-side Supabase admin client (alias for compatibility)
 export const supabaseAdmin = supabaseServer
 
 // Helper functions for common operations
 export async function getUserByEmail(email: string) {
+  if (!supabaseServer) {
+    throw new Error('Supabase server client not available')
+  }
+  
   const { data, error } = await supabaseServer
     .from('users')
     .select('*')
@@ -44,6 +60,10 @@ export async function createUser(userData: {
   password: string
   role?: string
 }) {
+  if (!supabaseServer) {
+    throw new Error('Supabase server client not available')
+  }
+  
   const { data, error } = await supabaseServer
     .from('users')
     .insert({
@@ -65,6 +85,10 @@ export async function createUser(userData: {
 }
 
 export async function getUserCount() {
+  if (!supabaseServer) {
+    throw new Error('Supabase server client not available')
+  }
+  
   const { count, error } = await supabaseServer
     .from('users')
     .select('*', { count: 'exact', head: true })
@@ -79,6 +103,11 @@ export async function getUserCount() {
 // Upload image to Supabase Storage
 export const uploadToSupabase = async (file: File, folder: string) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not available')
+    }
+
     // Validate file
     if (!file || file.size === 0) {
       throw new Error('Invalid file provided')
@@ -145,6 +174,11 @@ export const uploadToSupabase = async (file: File, folder: string) => {
 // Delete image from Supabase Storage
 export const deleteFromSupabase = async (filePath: string) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not available')
+    }
+
     const { error } = await supabaseAdmin.storage
       .from('images')
       .remove([filePath])
@@ -168,6 +202,12 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
   quality?: number
 }) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client not available')
+      return '/api/placeholder/400/500?text=Image+Error'
+    }
+
     const { data } = supabaseAdmin.storage
       .from('images')
       .getPublicUrl(filePath, {
@@ -183,6 +223,10 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
     console.error('Error getting optimized image URL:', error)
     // Return the basic public URL as fallback
     try {
+      if (!supabaseAdmin) {
+        return '/api/placeholder/400/500?text=Image+Error'
+      }
+      
       const { data } = supabaseAdmin.storage
         .from('images')
         .getPublicUrl(filePath)
@@ -198,6 +242,11 @@ export const getOptimizedImageUrl = (filePath: string, options?: {
 // List all files in a folder
 export const listFilesInFolder = async (folder: string) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not available')
+    }
+
     const { data, error } = await supabaseAdmin.storage
       .from('images')
       .list(folder, {
@@ -220,6 +269,11 @@ export const listFilesInFolder = async (folder: string) => {
 // Get file metadata
 export const getFileMetadata = async (filePath: string) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not available')
+    }
+
     const { data } = supabaseAdmin.storage
       .from('images')
       .getPublicUrl(filePath)
@@ -234,6 +288,11 @@ export const getFileMetadata = async (filePath: string) => {
 // Cleanup orphaned files (files not referenced in database)
 export const cleanupOrphanedFiles = async (referencedPaths: string[]) => {
   try {
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not available')
+    }
+
     // Get all files in the images bucket
     const { data: allFiles, error } = await supabaseAdmin.storage
       .from('images')

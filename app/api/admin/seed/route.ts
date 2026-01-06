@@ -11,6 +11,14 @@ export async function POST(_request: NextRequest) {
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Check if data already exists
     const { count: existingImages } = await supabaseServer
       .from('gallery_images')

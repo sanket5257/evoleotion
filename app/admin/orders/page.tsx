@@ -7,6 +7,12 @@ export const revalidate = 0
 
 async function getOrders() {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return []
+    }
+
     const { data: orders, error } = await supabaseServer
       .from('orders')
       .select(`

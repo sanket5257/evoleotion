@@ -7,6 +7,14 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Test basic Supabase connection
     const startTime = Date.now()
     

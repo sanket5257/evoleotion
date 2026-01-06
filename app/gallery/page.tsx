@@ -9,6 +9,12 @@ export const revalidate = 0
 
 async function getGalleryData() {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return { images: [], styles: [] }
+    }
+
     // Get active gallery images
     const { data: images, error: imagesError } = await supabaseServer
       .from('gallery_images')

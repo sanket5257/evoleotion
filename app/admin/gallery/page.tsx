@@ -7,7 +7,13 @@ export const revalidate = 0
 
 async function getGalleryImages() {
   try {
-    const { data: images, error } = await supabaseServer
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return []
+    }
+
+    const { data: images, error } = await supabaseServer!
       .from('gallery_images')
       .select('*')
       .order('order', { ascending: true })

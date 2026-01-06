@@ -14,6 +14,14 @@ export async function PUT(
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { id } = params
     const body = await request.json()
     const { style, size, numberOfFaces, basePrice, isActive } = body
@@ -57,6 +65,14 @@ export async function DELETE(
   try {
     await requireAdmin()
 
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { id } = params
 
     const { error } = await supabaseServer

@@ -7,6 +7,14 @@ export const runtime = 'nodejs'
 
 export async function POST() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Check if offers data already exists
     const { data: existingOffers, error: checkError } = await supabaseServer
       .from('offers')
@@ -103,6 +111,14 @@ export async function POST() {
 
 export async function DELETE() {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     // Delete all offers
     const { error } = await supabaseServer
       .from('offers')

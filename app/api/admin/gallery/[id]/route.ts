@@ -45,6 +45,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Title and style are required' }, { status: 400 })
     }
 
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
+
     const { data: image, error } = await supabaseServer
       .from('gallery_images')
       .update({
@@ -85,6 +93,14 @@ export async function PATCH(
     }
 
     await requireAdmin()
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
 
     const { id } = params
 
@@ -136,6 +152,14 @@ export async function DELETE(
     }
 
     await requireAdmin()
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
 
     const { id } = params
 

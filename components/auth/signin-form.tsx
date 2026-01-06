@@ -52,7 +52,7 @@ export function SignInForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (loading || authLoading) return
+    if (loading || authLoading || hasRedirected.current) return
 
     setLoading(true)
     setError('')

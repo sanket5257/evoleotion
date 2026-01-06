@@ -8,6 +8,14 @@ export const runtime = 'nodejs'
 
 export async function PATCH(request: NextRequest) {
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const session = await getSession()
     
     if (!session?.userId) {

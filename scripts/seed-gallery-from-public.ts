@@ -8,7 +8,7 @@ let gallerySeedingUtils: any = null
 
 async function getSupabaseAdmin() {
   if (!supabaseAdmin) {
-    const { supabaseAdmin: admin } = await import('../lib/supabase')
+    const { supabaseAdmin: admin } = await import('../lib/supabase-server')
     supabaseAdmin = admin
   }
   return supabaseAdmin

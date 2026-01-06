@@ -17,6 +17,12 @@ async function getUserProfile() {
       redirect('/auth/signin')
     }
 
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      redirect('/auth/signin')
+    }
+
     const { data: user, error } = await supabaseServer
       .from('users')
       .select(`

@@ -42,6 +42,12 @@ export async function checkForDuplicates(
   }
 ): Promise<DuplicateCheckResult> {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return { isDuplicate: false, matchedOn: [] }
+    }
+
     const conditions: string[] = []
     const matchedOn: string[] = []
     
@@ -123,7 +129,7 @@ export async function handleDuplicate(
         }
       
       case DuplicateStrategy.UPDATE:
-        const { data: updatedData, error: updateError } = await supabaseServer
+        const { data: updatedData, error: updateError } = await supabaseServer!
           .from('gallery_images')
           .update({
             title: imageData.title,
@@ -156,7 +162,7 @@ export async function handleDuplicate(
         // Generate new unique public_id
         const newPublicId = `${imageData.public_id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
         
-        const { data: newData, error: createError } = await supabaseServer
+        const { data: newData, error: createError } = await supabaseServer!
           .from('gallery_images')
           .insert({
             ...imageData,
@@ -232,6 +238,12 @@ export async function getGalleryStats(): Promise<{
   inactive: number
 }> {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return { total: 0, byStyle: {}, active: 0, inactive: 0 }
+    }
+
     const { data, error } = await supabaseServer
       .from('gallery_images')
       .select('style, is_active')
@@ -280,6 +292,12 @@ export async function cleanupOrphanedRecords(): Promise<{
   errors: string[]
 }> {
   try {
+    // Check if database connection is available
+    if (!supabaseServer) {
+      console.error('Database connection not available')
+      return { success: false, deletedCount: 0, errors: ['Database connection not available'] }
+    }
+
     const { data: allImages, error } = await supabaseServer
       .from('gallery_images')
       .select('id, image_url, public_id')
@@ -303,7 +321,7 @@ export async function cleanupOrphanedRecords(): Promise<{
     
     // Delete orphaned records
     if (orphanedIds.length > 0) {
-      const { error: deleteError } = await supabaseServer
+      const { error: deleteError } = await supabaseServer!
         .from('gallery_images')
         .delete()
         .in('id', orphanedIds)

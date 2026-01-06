@@ -11,6 +11,14 @@ export async function GET() {
 
   // Test 1: Basic connection
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { data, error } = await supabaseServer
       .from('users')
       .select('id')
@@ -33,6 +41,14 @@ export async function GET() {
 
   // Test 2: User table access
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { count, error } = await supabaseServer
       .from('users')
       .select('*', { count: 'exact', head: true })
@@ -54,6 +70,14 @@ export async function GET() {
 
   // Test 3: Gallery table access
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { count, error } = await supabaseServer
       .from('gallery_images')
       .select('*', { count: 'exact', head: true })
@@ -75,6 +99,14 @@ export async function GET() {
 
   // Test 4: Orders table access
   try {
+
+    // Check if database connection is available
+    if (!supabaseServer) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      )
+    }
     const { count, error } = await supabaseServer
       .from('orders')
       .select('*', { count: 'exact', head: true })
