@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
-import { ShoppingCart, Clock, DollarSign, Tag } from 'lucide-react'
+import { ShoppingCart, Clock, DollarSign, Tag, Users } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 interface DashboardStatsProps {
@@ -10,6 +10,7 @@ interface DashboardStatsProps {
   pendingOrders: number
   totalRevenue: number
   activeOffers: number
+  totalUsers: number
 }
 
 const stats = [
@@ -37,11 +38,17 @@ const stats = [
     color: 'text-purple-600',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
   },
+  {
+    name: 'Total Users',
+    icon: Users,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
+  },
 ]
 
-export function DashboardStats({ totalOrders, pendingOrders, totalRevenue, activeOffers }: DashboardStatsProps) {
+export function DashboardStats({ totalOrders, pendingOrders, totalRevenue, activeOffers, totalUsers }: DashboardStatsProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const values = [totalOrders, pendingOrders, totalRevenue, activeOffers]
+  const values = [totalOrders, pendingOrders, totalRevenue, activeOffers, totalUsers]
 
   useEffect(() => {
     const container = containerRef.current
@@ -57,7 +64,7 @@ export function DashboardStats({ totalOrders, pendingOrders, totalRevenue, activ
   }, [])
 
   return (
-    <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         const value = values[index]

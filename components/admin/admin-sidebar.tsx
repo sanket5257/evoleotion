@@ -12,7 +12,8 @@ import {
   ShoppingCart,
   Settings,
   Menu,
-  X
+  X,
+  Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Pricing', href: '/admin/pricing', icon: DollarSign },
   { name: 'Offers', href: '/admin/offers', icon: Tag },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

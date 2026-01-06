@@ -17,6 +17,7 @@ async function getDashboardData() {
         pendingOrders: 0,
         totalRevenue: 0,
         activeOffers: 0,
+        totalUsers: 0,
         recentOrders: []
       }
     }
@@ -46,6 +47,11 @@ async function getDashboardData() {
       .select('*', { count: 'exact', head: true })
       .eq('isActive', true)
 
+    // Get total users count
+    const { count: totalUsers } = await supabaseServer
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+
     // Get recent orders
     const { data: recentOrders } = await supabaseServer
       .from('orders')
@@ -61,6 +67,7 @@ async function getDashboardData() {
       pendingOrders: pendingOrders || 0,
       totalRevenue,
       activeOffers: activeOffers || 0,
+      totalUsers: totalUsers || 0,
       recentOrders: recentOrders || []
     }
   } catch (error) {
@@ -70,6 +77,7 @@ async function getDashboardData() {
       pendingOrders: 0,
       totalRevenue: 0,
       activeOffers: 0,
+      totalUsers: 0,
       recentOrders: []
     }
   }
@@ -92,6 +100,7 @@ export default async function AdminDashboard() {
         pendingOrders={data.pendingOrders}
         totalRevenue={data.totalRevenue}
         activeOffers={data.activeOffers}
+        totalUsers={data.totalUsers}
       />
 
       <div className="grid lg:grid-cols-2 gap-6">
