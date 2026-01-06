@@ -226,8 +226,7 @@ export async function createOrder(formData: FormData) {
               id: crypto.randomUUID(),
               orderId: orderId,
               imageUrl: upload.secure_url,
-              publicId: upload.public_id,
-              updatedAt: new Date().toISOString()
+              publicId: upload.public_id
             }))
           )
 

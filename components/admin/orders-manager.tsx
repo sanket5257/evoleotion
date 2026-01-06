@@ -28,7 +28,7 @@ interface Order {
   createdAt: string
   user?: { name: string | null; email: string } | null
   offer?: { title: string } | null
-  images: { id: string; imageUrl: string }[]
+  images: { id: string; imageUrl: string; publicId: string }[]
 }
 
 interface OrdersManagerProps {
@@ -267,7 +267,11 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                         {order.orderNumber}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
                       </div>
                     </div>
                   </td>
@@ -436,7 +440,7 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
               </div>
 
               {/* Images */}
-              {selectedOrder.images.length > 0 && (
+              {selectedOrder.images && selectedOrder.images.length > 0 ? (
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-lg font-semibold">Customer Images ({selectedOrder.images.length})</h4>
@@ -489,6 +493,14 @@ export function OrdersManager({ orders }: OrdersManagerProps) {
                   {/* Image info */}
                   <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                     <p>💡 Tip: Hover over images to download individually, or use "Download All" to get all images at once.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold mb-4">Customer Images</h4>
+                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-500 dark:text-gray-400">No images uploaded for this order</p>
                   </div>
                 </div>
               )}
