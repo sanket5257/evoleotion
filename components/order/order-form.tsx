@@ -55,7 +55,8 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   // Calculate price function
   const calculatePrice = useCallback(() => {
     try {
-      if (!formData.style || !formData.size || !formData.numberOfFaces || !pricing) {
+      // Check if we have all required data for price calculation
+      if (!formData.style || !formData.size || !formData.numberOfFaces || !pricing || pricing.length === 0) {
         setPriceCalculation({
           basePrice: 0,
           discountAmount: 0,
@@ -136,22 +137,29 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
 
       const finalPrice = Math.max(0, subtotal - maxDiscount)
 
-      setPriceCalculation({
-        basePrice,
-        discountAmount: maxDiscount,
-        finalPrice,
-        appliedOffer: bestOffer,
-      })
+      // Only update if we have valid data
+      if (basePrice >= 0 && finalPrice >= 0) {
+        setPriceCalculation({
+          basePrice,
+          discountAmount: maxDiscount,
+          finalPrice,
+          appliedOffer: bestOffer,
+        })
+      }
     } catch (error) {
       console.error('Error calculating price:', error)
-      setPriceCalculation({
-        basePrice: 0,
-        discountAmount: 0,
-        finalPrice: 0,
-        appliedOffer: null,
-      })
+      // Don't reset to 0 if we already have a valid price calculation
+      // Only reset if we don't have any valid price yet
+      if (priceCalculation.finalPrice === 0) {
+        setPriceCalculation({
+          basePrice: 0,
+          discountAmount: 0,
+          finalPrice: 0,
+          appliedOffer: null,
+        })
+      }
     }
-  }, [formData, pricing, offers])
+  }, [formData, pricing, offers, priceCalculation.finalPrice])
 
   // Validate form fields
   const validateForm = useCallback(() => {
@@ -241,12 +249,18 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   const updateFormData = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     
+    // Clear field-specific errors
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev }
         delete newErrors[field]
         return newErrors
       })
+    }
+    
+    // If updating coupon code, don't clear other validation errors
+    if (field === 'couponCode') {
+      return
     }
   }, [errors])
 
@@ -374,7 +388,12 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
   // Calculate price whenever form data changes
   useEffect(() => {
     if (mounted) {
-      calculatePrice()
+      // Add a small delay for coupon code changes to prevent rapid recalculations
+      const timeoutId = setTimeout(() => {
+        calculatePrice()
+      }, formData.couponCode ? 300 : 0)
+      
+      return () => clearTimeout(timeoutId)
     }
   }, [formData, pricing, offers, mounted, calculatePrice])
 
@@ -710,9 +729,16 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
       )}
 
       <div className="text-center">
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-gray-500 mb-2">
+            Style: {formData.style || 'none'} | Size: {formData.size || 'none'} | Price: {priceCalculation.finalPrice} | Images: {images.length}
+          </div>
+        )}
+        
         <button
           type="submit"
-          disabled={images.length === 0 || priceCalculation.finalPrice === 0 || loading}
+          disabled={images.length === 0 || !formData.style || !formData.size || (priceCalculation.finalPrice === 0 && priceCalculation.basePrice === 0) || loading}
           className="px-12 py-4 bg-white text-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto space-x-2"
         >
           {loading ? (
@@ -723,14 +749,33 @@ export function OrderForm({ pricing = [], offers = [] }: OrderFormProps) {
           ) : (
             <>
               <CheckCircle className="w-4 h-4" />
-              <span>Place Order - {formatPrice(priceCalculation.finalPrice)}</span>
+              <span>
+                {!formData.style || !formData.size 
+                  ? 'Select Size and Style' 
+                  : priceCalculation.basePrice > 0
+                    ? `Place Order - ${formatPrice(priceCalculation.finalPrice)}`
+                    : 'Calculating Price...'
+                }
+              </span>
             </>
           )}
         </button>
         
-        {priceCalculation.finalPrice === 0 && (
+        {(!formData.style || !formData.size) && (
           <p className="text-gray-400 text-sm mt-2">
-            Please select style and size to see pricing
+            Please select style and size to continue
+          </p>
+        )}
+        
+        {formData.style && formData.size && priceCalculation.finalPrice === 0 && priceCalculation.basePrice === 0 && (
+          <p className="text-gray-400 text-sm mt-2">
+            Calculating price...
+          </p>
+        )}
+        
+        {images.length === 0 && formData.style && formData.size && priceCalculation.basePrice > 0 && (
+          <p className="text-gray-400 text-sm mt-2">
+            Please upload at least one image
           </p>
         )}
       </div>

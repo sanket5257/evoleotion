@@ -94,10 +94,19 @@ export async function createOrder(formData: FormData) {
     const finalPrice = parseFloat(formData.get('finalPrice') as string) || 0
     const offerId = formData.get('offerId') as string || undefined
 
-    if (basePrice <= 0 || finalPrice <= 0) {
+    // Validate pricing - basePrice must be positive, finalPrice can be 0 (100% discount)
+    if (basePrice <= 0 || finalPrice < 0) {
       return {
         success: false,
         error: 'Invalid pricing information. Please refresh and try again.',
+      }
+    }
+
+    // Additional validation: discount cannot exceed base price
+    if (discountAmount > basePrice) {
+      return {
+        success: false,
+        error: 'Invalid discount amount. Please refresh and try again.',
       }
     }
 

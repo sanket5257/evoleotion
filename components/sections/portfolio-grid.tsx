@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import Image from 'next/image'
-import { VideoLoader } from '@/components/ui/video-loader'
 
 const portfolioItems = [
   {
@@ -10,8 +9,7 @@ const portfolioItems = [
     title: 'Realistic Portraits',
     category: 'Pencil Art',
     image: '/artworks/WhatsApp Image 2025-12-31 at 10.47.38 AM (1).jpeg',
-    size: 'large',
-    video: '/videos/630534398d9471ade12fc55f_68222bff4288bb35ff4929b2_Spirit (New 3D Music Visual)-transcode.mp4'
+    size: 'large'
   },
   {
     id: 2,
@@ -25,8 +23,7 @@ const portfolioItems = [
     title: 'Family Sketches',
     category: 'Custom Work',
     image: '/artworks/WhatsApp Image 2025-12-31 at 10.47.39 AM.jpeg',
-    size: 'small',
-    video: '/videos/630534398d9471ade12fc55f_68222c0477573df0f6bebb21_Trajadao (New 3D)-transcode.mp4'
+    size: 'small'
   },
   {
     id: 4,
@@ -39,31 +36,16 @@ const portfolioItems = [
     id: 5,
     title: 'Memorial Portraits',
     category: 'Special Commission',
-    image: '/artworks/WhatsApp Image 2025-12-31 at 10.47.40 AM.jpeg',
-    size: 'large',
-    video: '/videos/glassyObj.3c74f580.mp4'
+    image: '/artworks/OIP.webp',
+    size: 'large'
   }
 ]
 
 export function PortfolioGrid() {
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   const handleImageError = useCallback((itemId: number) => {
     setImageErrors(prev => new Set(prev).add(itemId))
-  }, [])
-
-  const handleMouseEnter = useCallback((itemId: number) => {
-    setHoveredItem(itemId)
-  }, [])
-
-  const handleMouseLeave = useCallback(() => {
-    setHoveredItem(null)
   }, [])
 
   return (
@@ -88,37 +70,22 @@ export function PortfolioGrid() {
                 ${item.size === 'medium' ? 'col-span-12 md:col-span-4 row-span-1' : ''}
                 ${item.size === 'small' ? 'col-span-12 md:col-span-3 row-span-1' : ''}
               `}
-              onMouseEnter={() => handleMouseEnter(item.id)}
-              onMouseLeave={handleMouseLeave}
             >
-              {/* Background Image/Video */}
-              {item.video && hoveredItem === item.id && isClient ? (
-                <VideoLoader
-                  src={item.video}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
+              {/* Background Image */}
+              {imageErrors.has(item.id) ? (
+                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                  <p className="text-white/60 text-sm">Image unavailable</p>
+                </div>
               ) : (
-                <>
-                  {imageErrors.has(item.id) ? (
-                    <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                      <p className="text-white/60 text-sm">Image unavailable</p>
-                    </div>
-                  ) : (
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      onError={() => handleImageError(item.id)}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      priority={item.id <= 2} // Prioritize first 2 images
-                    />
-                  )}
-                </>
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={() => handleImageError(item.id)}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={item.id <= 2} // Prioritize first 2 images
+                />
               )}
               
               {/* Overlay */}
