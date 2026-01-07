@@ -84,12 +84,6 @@ The Lenis instance is configured with these settings:
 {
   duration: 1.2,           // Scroll duration
   easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Easing function
-  direction: 'vertical',   // Scroll direction
-  smooth: true,           // Enable smooth scrolling
-  mouseMultiplier: 1,     // Mouse wheel sensitivity
-  smoothTouch: false,     // Disable on touch devices
-  touchMultiplier: 2,     // Touch sensitivity
-  infinite: false,        // Disable infinite scroll
 }
 ```
 
