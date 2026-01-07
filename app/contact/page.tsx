@@ -56,10 +56,10 @@ export default function ContactPage() {
         {/* Hero Section */}
         <section className="px-8 py-16">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+            <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8 font-script">
               Get In Touch
             </h1>
-            <p className="text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12">
+            <p className="text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12 font-grotesk">
               Ready to create your custom portrait? Have questions about our process? 
               We're here to help bring your vision to life.
             </p>
@@ -89,7 +89,7 @@ export default function ContactPage() {
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-light tracking-wider mb-4">
+              <h2 className="text-4xl font-light tracking-wider mb-4 font-script">
                 How to Reach Us
               </h2>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -122,7 +122,7 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
               {/* Contact Form */}
               <div>
-                <h2 className="text-4xl font-light tracking-wider mb-8">
+                <h2 className="text-4xl font-light tracking-wider mb-8 font-script">
                   Send Us a Message
                 </h2>
                 <p className="text-gray-400 mb-8 leading-relaxed">
@@ -134,7 +134,7 @@ export default function ContactPage() {
 
               {/* Additional Info */}
               <div>
-                <h2 className="text-4xl font-light tracking-wider mb-8">
+                <h2 className="text-4xl font-light tracking-wider mb-8 font-script">
                   Commission Details
                 </h2>
                 
@@ -224,7 +224,7 @@ export default function ContactPage() {
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-light tracking-wider mb-4">
+              <h2 className="text-4xl font-light tracking-wider mb-4 font-script">
                 Frequently Asked Questions
               </h2>
               <p className="text-lg text-gray-400">

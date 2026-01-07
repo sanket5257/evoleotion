@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import { GSAPProvider } from '@/components/animations/gsap-provider'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
@@ -7,8 +6,6 @@ import { Providers } from '@/components/providers'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import { ErrorBoundary } from '@/components/error-boundary'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Evoleotion - Leo\'s Portrait Studio | Hand-Drawn Art from India',
@@ -22,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-grotesk">
         <ErrorBoundary>
           <Providers>
             <GSAPProvider>

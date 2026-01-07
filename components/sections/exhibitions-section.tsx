@@ -37,7 +37,7 @@ export function ExhibitionsSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="mb-8 sm:mb-12 lg:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-wider mb-4">
+          <h2 className="text-3xl font-script sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-wider mb-4">
             How It Works
           </h2>
           <div className="w-16 sm:w-20 lg:w-24 h-px bg-white/30" />
@@ -128,7 +128,7 @@ export function ExhibitionsSection() {
         
         {/* CTA Section */}
         <div className="mt-16 sm:mt-20 lg:mt-24 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light tracking-wider mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light tracking-wider mb-4 font-script">
             Ready to Start?
           </h2>
           <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 px-4">

@@ -113,18 +113,15 @@ export function SignInForm() {
 
       <Button
         type="submit"
-        className="w-full flex items-center justify-center space-x-2"
+        className="w-full"
         disabled={loading || authLoading}
         loading={loading || authLoading}
       >
         {loading || authLoading ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-            <span>Signing in...</span>
-          </>
+          <span>Signing in...</span>
         ) : (
           <>
-            <Lock className="w-4 h-4" />
+            <Lock className="w-4 h-4 mr-2" />
             <span>Sign In</span>
           </>
         )}

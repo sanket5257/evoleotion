@@ -80,10 +80,10 @@ export function HeroVideo() {
       {/* Hero Content */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="text-center">
-          <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-4">
-            Portraits
+          <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-4 font-script">
+            FT.LEO
           </h1>
-          <p className="text-lg tracking-widest uppercase opacity-80">
+          <p className="text-lg tracking-widest uppercase opacity-80 font-grotesk">
             Pencil & Charcoal Art Studio
           </p>
         </div>

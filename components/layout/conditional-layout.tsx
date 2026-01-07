@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { Footer } from '@/components/layout/footer'
+import { ScrollToTop } from '@/components/ui/scroll-to-top'
 import { useEffect, useState } from 'react'
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
@@ -35,11 +36,12 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     )
   }
   
-  // For regular routes, render with global footer
+  // For regular routes, render with global footer and scroll to top
   return (
     <div className="min-h-screen bg-black text-white">
       {children}
       <Footer />
+      <ScrollToTop />
     </div>
   )
 }

@@ -12,13 +12,13 @@ export default function SignInPage() {
         <div className="max-w-md w-full mx-4">
           <div className="border border-white/20 p-8">
             <div className="text-center mb-8">
-              <Link href="/" className="text-3xl font-light tracking-wider hover:text-gray-300 transition-colors">
+              <Link href="/" className="text-3xl font-light tracking-wider hover:text-gray-300 transition-colors font-script">
                 Evoleotion
               </Link>
-              <h1 className="text-2xl font-light tracking-wide mt-8 mb-2">
+              <h1 className="text-2xl font-light tracking-wide mt-8 mb-2 font-script">
                 Welcome Back
               </h1>
-              <p className="text-gray-400">
+              <p className="text-gray-400 font-grotesk">
                 Sign in to your account to continue
               </p>
             </div>

@@ -9,8 +9,8 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
             <div className="mb-6">
-              <h2 className="text-2xl sm:text-3xl font-light tracking-wider mb-4">Evoleotion</h2>
-              <p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-md">
+              <h2 className="text-2xl sm:text-3xl font-light tracking-wider mb-4 font-script">Evoleotion</h2>
+              <p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-md font-grotesk">
                 Master the art of pencil and charcoal sketching. From realistic portraits 
                 to expressive drawings, discover the timeless beauty of traditional art.
               </p>
@@ -19,7 +19,7 @@ export function Footer() {
 
           {/* Navigation Links */}
           <div>
-            <h3 className="text-base sm:text-lg font-light tracking-wide mb-4 sm:mb-6">Shop</h3>
+            <h3 className="text-base sm:text-lg font-light tracking-wide mb-4 sm:mb-6 font-grotesk">Shop</h3>
             <ul className="space-y-2 sm:space-y-3">
               <li>
                 <a href="/" className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm uppercase tracking-widest">
@@ -56,7 +56,7 @@ export function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-base sm:text-lg font-light tracking-wide mb-4 sm:mb-6">Connect</h3>
+            <h3 className="text-base sm:text-lg font-light tracking-wide mb-4 sm:mb-6 font-grotesk">Connect</h3>
             <ul className="space-y-2 sm:space-y-3">
               <li>
                 <a href="mailto:hello@evoleotion.com" className="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm break-all">

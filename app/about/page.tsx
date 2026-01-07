@@ -47,10 +47,10 @@ export default function AboutPage() {
         {/* Hero Section */}
         <section className="px-8 py-16">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+            <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8 font-script">
               About Leo
             </h1>
-            <p className="text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12">
+            <p className="text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed mb-12 font-grotesk">
               Hi, I'm Leo - a 22-year-old passionate artist based in India, dedicated to transforming your cherished memories 
               into timeless hand-drawn portraits that capture the essence of every moment.
             </p>
@@ -75,7 +75,7 @@ export default function AboutPage() {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
-                <h2 className="text-4xl font-light tracking-wider mb-8">
+                <h2 className="text-4xl font-light tracking-wider mb-8 font-script">
                   My Journey
                 </h2>
                 <div className="space-y-6 text-gray-400 leading-relaxed">
@@ -117,7 +117,7 @@ export default function AboutPage() {
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-light tracking-wider mb-4">
+              <h2 className="text-4xl font-light tracking-wider mb-4 font-script">
                 What I Stand For
               </h2>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -143,7 +143,7 @@ export default function AboutPage() {
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-light tracking-wider mb-4">
+              <h2 className="text-4xl font-light tracking-wider mb-4 font-script">
                 About the Artist
               </h2>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -197,7 +197,7 @@ export default function AboutPage() {
               </div>
               
               <div>
-                <h2 className="text-4xl font-light tracking-wider mb-8">
+                <h2 className="text-4xl font-light tracking-wider mb-8 font-script">
                   My Artistic Process
                 </h2>
                 <div className="space-y-6 text-gray-400 leading-relaxed">
@@ -224,7 +224,7 @@ export default function AboutPage() {
         {/* CTA Section */}
         <section className="px-8 py-20 border-t border-white/10">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-light tracking-wider mb-8">
+            <h2 className="text-4xl font-light tracking-wider mb-8 font-script">
               Ready to Create Your Portrait?
             </h2>
             <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">

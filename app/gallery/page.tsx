@@ -67,10 +67,10 @@ export default async function GalleryPage() {
       <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-wider mb-4 sm:mb-6 lg:mb-8">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-wider mb-4 sm:mb-6 lg:mb-8 font-script">
               Gallery
             </h1>
-              <div className="text-base sm:text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
+              <div className="text-base sm:text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed px-4 font-grotesk">
               Explore our collection of stunning pencil and charcoal portraits. 
               Each piece showcases the artistry and craftsmanship we bring to every commission.
             </div>

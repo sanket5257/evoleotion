@@ -53,7 +53,7 @@ export function PortfolioGrid() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="mb-16">
-          <h2 className="text-4xl md:text-6xl font-light tracking-wider mb-4">
+          <h2 className="text-4xl font-script md:text-6xl font-light tracking-wider mb-4">
             Featured Portraits
           </h2>
           <div className="w-24 h-px bg-white/30" />

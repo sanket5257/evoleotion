@@ -26,12 +26,32 @@ export function GSAPProvider({ children }: { children: React.ReactNode }) {
           ease: 'power2.out',
         })
 
-        // Configure ScrollTrigger for better performance
+        // Configure ScrollTrigger to work with Lenis
         ScrollTrigger.config({
           autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load',
           ignoreMobileResize: true
         })
 
+        // Wait for Lenis to be available and configure ScrollTrigger
+        const configureLenis = () => {
+          const lenis = (window as any).lenis
+          if (lenis) {
+            // Update ScrollTrigger on Lenis scroll
+            lenis.on('scroll', ScrollTrigger.update)
+            
+            // Configure ScrollTrigger to use Lenis
+            gsap.ticker.add((time) => {
+              lenis.raf(time * 1000)
+            })
+            
+            gsap.ticker.lagSmoothing(0)
+          } else {
+            // Retry if Lenis isn't ready yet
+            setTimeout(configureLenis, 100)
+          }
+        }
+
+        configureLenis()
         initialized.current = true
       }
     } catch (error) {
@@ -48,6 +68,12 @@ export function GSAPProvider({ children }: { children: React.ReactNode }) {
             console.warn('Error killing ScrollTrigger:', e)
           }
         })
+        
+        // Clean up Lenis integration
+        const lenis = (window as any).lenis
+        if (lenis) {
+          lenis.off('scroll', ScrollTrigger.update)
+        }
       } catch (error) {
         console.warn('ScrollTrigger cleanup error:', error)
       }

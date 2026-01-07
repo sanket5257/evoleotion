@@ -35,7 +35,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Schibsted Grotesk', 'system-ui', 'sans-serif'],
+        grotesk: ['Schibsted Grotesk', 'system-ui', 'sans-serif'],
+        script: ['Sloop Script', 'cursive'],
+        heading: ['Sloop Script', 'cursive'], // Add heading font family
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
