@@ -225,13 +225,28 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
             <div className="space-y-4">
               <h4 className="text-lg font-medium text-gray-900 dark:text-white">Database</h4>
               <div className="space-y-2">
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.open('/api/admin/export/orders', '_blank')}
+                >
                   Export Orders Data
                 </Button>
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.open('/api/admin/export/gallery', '_blank')}
+                >
                   Export Gallery Data
                 </Button>
-                <Button type="button" variant="outline" className="w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.open('/api/admin/export/customers', '_blank')}
+                >
                   Export Customer Data
                 </Button>
               </div>

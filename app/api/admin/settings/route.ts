@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin-auth'
 import { supabaseServer } from '@/lib/supabase-server'
+import { getSession } from '@/lib/session'
 
-// Force dynamic rendering to prevent static evaluation during build
 export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    await requireAdmin()
-
+    // Check authentication and admin role
+    const session = await getSession()
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Check if database connection is available
     if (!supabaseServer) {
-      return NextResponse.json(
-        { error: 'Database connection not available' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Database connection not available' }, { status: 500 })
     }
+
     const { data: settings, error } = await supabaseServer
       .from('admin_settings')
       .select('*')
@@ -29,54 +28,55 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
     }
 
-    return NextResponse.json(settings)
+    return NextResponse.json(settings || {})
   } catch (error) {
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    console.error('Error fetching settings:', error)
+    console.error('Error in settings GET API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin()
-
+    // Check authentication and admin role
+    const session = await getSession()
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Check if database connection is available
     if (!supabaseServer) {
-      return NextResponse.json(
-        { error: 'Database connection not available' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Database connection not available' }, { status: 500 })
     }
+
     const body = await request.json()
     const { whatsappNumber, bannerTitle, bannerText, bannerActive } = body
 
+    // Validate required fields
     if (!whatsappNumber) {
       return NextResponse.json({ error: 'WhatsApp number is required' }, { status: 400 })
     }
 
-    // Check if settings already exist
+    // Check if settings exist
     const { data: existingSettings } = await supabaseServer
       .from('admin_settings')
-      .select('*')
+      .select('id')
       .limit(1)
       .single()
 
-    let settings
+    const settingsData = {
+      whatsappNumber,
+      bannerTitle: bannerTitle || null,
+      bannerText: bannerText || null,
+      bannerActive: Boolean(bannerActive),
+      updatedAt: new Date().toISOString()
+    }
+
+    let result
     if (existingSettings) {
       // Update existing settings
       const { data, error } = await supabaseServer
         .from('admin_settings')
-        .update({
-          whatsappNumber,
-          bannerTitle: bannerTitle || null,
-          bannerText: bannerText || null,
-          bannerActive: bannerActive || false,
-          updatedAt: new Date().toISOString()
-        })
+        .update(settingsData)
         .eq('id', existingSettings.id)
         .select()
         .single()
@@ -85,18 +85,14 @@ export async function POST(request: NextRequest) {
         console.error('Error updating settings:', error)
         return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
       }
-      settings = data
+      result = data
     } else {
       // Create new settings
       const { data, error } = await supabaseServer
         .from('admin_settings')
         .insert({
-          id: crypto.randomUUID(),
-          whatsappNumber,
-          bannerTitle: bannerTitle || null,
-          bannerText: bannerText || null,
-          bannerActive: bannerActive || false,
-          updatedAt: new Date().toISOString()
+          ...settingsData,
+          createdAt: new Date().toISOString()
         })
         .select()
         .single()
@@ -105,15 +101,12 @@ export async function POST(request: NextRequest) {
         console.error('Error creating settings:', error)
         return NextResponse.json({ error: 'Failed to create settings' }, { status: 500 })
       }
-      settings = data
+      result = data
     }
 
-    return NextResponse.json(settings)
+    return NextResponse.json(result)
   } catch (error) {
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    console.error('Error saving settings:', error)
+    console.error('Error in settings POST API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

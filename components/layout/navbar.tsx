@@ -166,7 +166,7 @@ export function Navbar() {
     <>
       <nav className="flex justify-between items-center p-4 md:p-6 lg:p-8 relative z-50 border-b border-white/10">
         {/* Logo */}
-        <div className="text-xl md:text-2xl font-bold tracking-wider flex-shrink-0 font-script">
+        <div className="text-xl md:text-2xl font-bold tracking-wider flex-shrink-0 font-grotesk">
           <Link href="/" className="hover:text-gray-300 transition-colors">
             Evoleotion
           </Link>

@@ -67,13 +67,13 @@ export default async function FavoritesPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-black text-white" data-dashboard="true">
         <Navbar />
         
         <div className="px-8 py-16">
           <div className="max-w-7xl mx-auto">
             <div className="mb-12">
-              <h1 className="text-4xl md:text-6xl font-light tracking-wider mb-4">
+              <h1 className="text-4xl md:text-6xl font-light tracking-wider mb-4 font-grotesk">
                 My Favorites
               </h1>
               <p className="text-lg text-gray-400">

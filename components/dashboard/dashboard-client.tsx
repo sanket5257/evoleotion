@@ -16,7 +16,7 @@ export function DashboardClient({ orders }: DashboardClientProps) {
   return (
     <AuthGuard requireAuth={true}>
       <PageTransition>
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-black text-white" data-dashboard="true">
           {/* Navigation */}
           <Navbar />
 
@@ -24,7 +24,7 @@ export function DashboardClient({ orders }: DashboardClientProps) {
             <div className="max-w-7xl mx-auto">
               {/* Header */}
               <div className="text-center mb-16">
-                <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8">
+                <h1 className="text-6xl md:text-8xl font-light tracking-wider mb-8 font-grotesk">
                   Dashboard
                 </h1>
                 <div className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">

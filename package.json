@@ -22,7 +22,8 @@
     "seed:gallery:update": "tsx scripts/seed-gallery-from-public.ts --update",
     "create-admin": "node scripts/create-admin.js",
     "create-test-admin": "node scripts/create-test-admin.js",
-    "create-admin-password": "node scripts/create-admin-with-password.js"
+    "create-admin-password": "node scripts/create-admin-with-password.js",
+    "setup:admin-settings": "tsx scripts/setup-admin-settings.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

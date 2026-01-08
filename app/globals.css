@@ -31,8 +31,18 @@
   }
   
   /* Make all headings use script font by default */
-  h1, h2, h3, h4, h5, h6 {
+  h1 {
     font-family: 'Sloop Script', cursive;
+  }
+  
+  /* Dashboard pages use normal font instead of script font - higher specificity */
+  [data-dashboard="true"] h1,
+  [data-dashboard="true"] h2,
+  [data-dashboard="true"] h3,
+  [data-dashboard="true"] h4,
+  [data-dashboard="true"] h5,
+  [data-dashboard="true"] h6 {
+    font-family: 'Schibsted Grotesk', system-ui, sans-serif !important;
   }
   
   * {

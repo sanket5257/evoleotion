@@ -2,6 +2,7 @@ import { supabaseServer } from '@/lib/supabase-server'
 import { DashboardStats } from '@/components/admin/dashboard-stats'
 import { RecentOrders } from '@/components/admin/recent-orders'
 import { RevenueChart } from '@/components/admin/revenue-chart'
+import { DashboardRefresh } from '@/components/admin/dashboard-refresh'
 
 // Force dynamic rendering - prevents static generation at build time
 export const dynamic = 'force-dynamic'
@@ -88,11 +89,14 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Overview of your sketch store performance
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Overview of your sketch store performance
+          </p>
+        </div>
+        <DashboardRefresh />
       </div>
 
       <DashboardStats

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Footer } from '@/components/layout/footer'
 import { ScrollToTop } from '@/components/ui/scroll-to-top'
+import { PromotionalBanner } from '@/components/ui/promotional-banner'
 import { useEffect, useState } from 'react'
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
@@ -36,9 +37,10 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     )
   }
   
-  // For regular routes, render with global footer and scroll to top
+  // For regular routes, render with promotional banner, footer and scroll to top
   return (
     <div className="min-h-screen bg-black text-white">
+      <PromotionalBanner />
       {children}
       <Footer />
       <ScrollToTop />
